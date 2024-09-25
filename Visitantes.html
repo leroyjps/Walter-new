@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitantes - Walterscheid Powertrain Group</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="visitantes-body">
+    <header>
+        <nav>
+            <div id="title">
+                <h1>Visitantes</h1>
+            </div>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="sobre-nos.html">Sobre</a></li>
+                <li><a href="contato.html">Contato</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="slideshow-container">
+        <div class="mySlides fade">
+            <img src="components/images/coimbra.jpg" style="width:75%">
+            <div class="text">Visitante 1</div>
+        </div>
+
+        <div class="mySlides fade">
+            <img src="components/images/batista welcome.jpg" style="width:75%">
+            <div class="text">Visitante 2</div>
+        </div>
+
+        <div class="mySlides fade">
+            <img src="components/images/REINALDO CNH.JPG" style="width:75%">
+            <div class="text">Visitante 3</div>
+        </div>
+    </div>
+
+    <!-- Rodapé -->
+    <footer>
+        <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        let slideIndex = 0;
+        showSlides();
+
+        function showSlides() {
+            let slides = document.getElementsByClassName("mySlides");
+            for (let i = 0; i < slides.length; i++) {
+                slides[i].style.display = "none";
+            }
+            slideIndex++;
+            if (slideIndex > slides.length) { slideIndex = 1; }
+            slides[slideIndex - 1].style.display = "block";
+            setTimeout(showSlides, 180000); // Troca a cada 3 minutos (180000ms)
+        }
+    </script>
+</body>
+</html>

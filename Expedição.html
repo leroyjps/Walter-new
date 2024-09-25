@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expedição - Walterscheid Day</title>
+    <!-- Importação de estilos e fontes -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <header>
+        <nav>
+            <div id="title">
+                <h1>Walterscheid Powertrain Group</h1>
+            </div>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="sobre-nos.html">Sobre</a></li>
+                <li><a href="Entregas.html">Entregas</a></li>
+                <li><a href="Videos.html">Vídeos</a></li>
+                <li><a href="aprovacao.html">Aprovações</a></li>
+                <li><a href="Embarques.html">Embarques</a></li>
+                <li><a href="Formulario.html">Manutenção</a></li>
+                <li><a href="oea.html">OEE</a></li>
+                <li><a href="visitantes.html">Visitantes</a></li>
+                <li><a href="expedicao.html">Expedição</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Conteúdo principal da página de Expedição -->
+    <main>
+        <section class="expedicao-section">
+            <h1>Expedição</h1>
+            <p>Monitoramento de expedições em tempo real. Acompanhe o status dos seus pedidos e entregas.</p>
+
+            <!-- Tabela ou iframe para exibir dados de expedições -->
+            <div class="responsive-container">
+                <iframe class="responsive-iframe" frameborder="0" scrolling="no" src="https://comeronline.sharepoint.com/sites/WPG_BRAZIL/_layouts/15/Doc.aspx?sourcedoc={dcde1a42-5ad7-4b84-88c8-f457d9607b83}&action=embedview&wdAllowInteractivity=False&ActiveCell='Display'!A1&Item='Display'!A1%3AH18&wdHideGridlines=True&wdDownloadButton=True&wdInConfigurator=True&wdInConfigurator=True"></iframe>
+            </div>
+        </section>
+    </main>
+
+    <!-- Script para recarregar a página automaticamente a cada 5 minutos -->
+    <script>
+        function reloadPage() {
+            location.reload();
+        }
+        setTimeout(reloadPage, 300000); // Recarrega a página a cada 5 minutos
+    </script>
+
+    <!-- Rodapé -->
+    <footer>
+        <div class="footer-logo">
+            <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
+        </div>
+        <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+    </footer>
+</body>
+</html>
