@@ -323,4 +323,24 @@ footer p {
     text-align: center;
 }
 
+.cardapio-section {
+    text-align: center;
+    padding: 20px;
+}
+
+.cardapio-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.cardapio-img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+}
+
+
 
