@@ -6,28 +6,6 @@
     <title>Relatório de Pedidos - Walterscheid Powertrain Group</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <style>
-        /* Estilos para impressão */
-        @media print {
-            body {
-                margin: 0;
-                padding: 0;
-                font-family: 'Poppins', sans-serif;
-            }
-            header, footer {
-                display: none; /* Esconde cabeçalho e rodapé na impressão */
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-            th, td {
-                border: 1px solid #ccc;
-                padding: 8px;
-                text-align: left;
-            }
-        }
-    </style>
 </head>
 <body>
     <!-- Cabeçalho -->
@@ -39,8 +17,8 @@
             <ul>
                 <li><a href="index.html">Home</a></li>
                 <li><a href="gerador.html">Gerar Pedido</a></li>
+                <li><a href="visualizador.html">Visualizar Pedidos</a></li>
                 <li><a href="atualizar.html">Atualizar Pedidos</a></li>
-                <li><a href="relatorio.html">Relatório de Pedidos</a></li>
             </ul>
         </nav>
     </header>
@@ -49,8 +27,7 @@
     <main>
         <section>
             <h1>Relatório de Pedidos</h1>
-            <button onclick="window.print()">Imprimir Relatório</button>
-            <table id="pedidoTable">
+            <table id="relatorioTable">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -58,13 +35,17 @@
                         <th>Quantidade</th>
                         <th>Parceiro de Negócio</th>
                         <th>Status</th>
-                        <th>Data e Hora</th>
+                        <th>Data e Hora de Entrada</th>
+                        <th>Data e Hora de Liberação</th>
+                        <th>Duração (min)</th>
                     </tr>
                 </thead>
                 <tbody>
                     <!-- Os pedidos serão inseridos aqui via JavaScript -->
                 </tbody>
             </table>
+
+            <button id="imprimirBtn">Imprimir Relatório</button>
         </section>
     </main>
 
@@ -77,12 +58,16 @@
     </footer>
 
     <script>
-        function atualizarRelatorio() {
+        function carregarRelatorio() {
             const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-            const tabela = document.getElementById("pedidoTable").querySelector("tbody");
+            const tabela = document.getElementById("relatorioTable").querySelector("tbody");
             tabela.innerHTML = ""; // Limpa a tabela existente
 
             pedidos.forEach((pedido, index) => {
+                const dataEntrada = new Date(pedido.data);
+                const dataLiberacao = pedido.status === "Liberado" ? new Date() : null; // Liberação só se o status for "Liberado"
+                const duracao = dataLiberacao ? Math.round((dataLiberacao - dataEntrada) / 60000) : "-"; // Duração em minutos
+
                 const novaLinha = tabela.insertRow();
                 novaLinha.innerHTML = `
                     <td>${index + 1}</td>
@@ -90,14 +75,20 @@
                     <td>${pedido.quantidade}</td>
                     <td>${pedido.parceiro}</td>
                     <td>${pedido.status}</td>
-                    <td>${pedido.data}</td>
+                    <td>${dataEntrada.toLocaleString()}</td>
+                    <td>${dataLiberacao ? dataLiberacao.toLocaleString() : "-"}</td>
+                    <td>${duracao}</td>
                 `;
             });
         }
 
-        // Atualiza a tabela ao carregar a página
+        document.getElementById("imprimirBtn").onclick = function() {
+            window.print(); // Imprime a página
+        };
+
+        // Carrega o relatório ao carregar a página
         window.onload = function() {
-            atualizarRelatorio();
+            carregarRelatorio();
         };
     </script>
 </body>
