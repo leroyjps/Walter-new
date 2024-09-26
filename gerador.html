@@ -27,17 +27,20 @@
         <section>
             <h1>Gerar/Editar Pedido</h1>
             <!-- Formulário de Pedido -->
-            <form id="pedidoForm">
+            <form id="pedidoForm" name="gerar-pedido" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+                <input type="hidden" name="bot-field">
+                <input type="hidden" name="form-name" value="gerar-pedido">
+
                 <label for="item">Item:</label>
-                <input type="text" id="item" required>
+                <input type="text" id="item" name="item" required>
                 
                 <label for="quantidade">Quantidade:</label>
-                <input type="number" id="quantidade" required>
+                <input type="number" id="quantidade" name="quantidade" required>
                 
                 <label for="parceiro">Parceiro de Negócio:</label>
-                <input type="text" id="parceiro" required>
+                <input type="text" id="parceiro" name="parceiro" required>
                 
-                <input type="hidden" id="pedidoIndex">
+                <input type="hidden" id="pedidoIndex" name="pedidoIndex">
                 
                 <button type="submit" id="submitButton">Gerar Pedido</button>
                 <button type="button" id="cancelarEdicao" style="display:none;">Cancelar Edição</button>
