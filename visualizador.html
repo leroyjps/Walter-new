@@ -42,24 +42,30 @@
                 </tbody>
             </table>
         </section>
-
-        <!-- Formulário para atualização de pedidos -->
-        <section class="atualizar-pedido-section">
-            <h1>Atualizar Pedido</h1>
-            <form id="atualizarForm" name="atualizar-pedido" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+        
+        <!-- Formulário de Novo Pedido -->
+        <section>
+            <h2>Adicionar Novo Pedido</h2>
+            <form id="pedidoForm" name="novo-pedido" method="POST" data-netlify="true" netlify-honeypot="bot-field">
                 <input type="hidden" name="bot-field">
-                <input type="hidden" name="form-name" value="atualizar-pedido">
+                <input type="hidden" name="form-name" value="novo-pedido">
 
-                <label for="pedidoId">ID do Pedido:</label>
-                <input type="number" id="pedidoId" name="pedidoId" required>
+                <label for="item">Item:</label>
+                <input type="text" id="item" name="item" required>
 
-                <label for="status">Atualizar Status:</label>
+                <label for="quantidade">Quantidade:</label>
+                <input type="number" id="quantidade" name="quantidade" required>
+
+                <label for="parceiro">Parceiro de Negócio:</label>
+                <input type="text" id="parceiro" name="parceiro" required>
+
+                <label for="status">Status:</label>
                 <select id="status" name="status" required>
                     <option value="Liberado">Liberado</option>
                     <option value="Não Liberado">Não Liberado</option>
                 </select>
 
-                <button type="submit">Atualizar Status</button>
+                <button type="submit">Adicionar Pedido</button>
             </form>
         </section>
 
@@ -113,6 +119,24 @@
             });
         }
 
+        // Adiciona novo pedido ao localStorage e atualiza a tabela
+        document.getElementById("pedidoForm").onsubmit = function(e) {
+            e.preventDefault();
+            const item = document.getElementById("item").value;
+            const quantidade = document.getElementById("quantidade").value;
+            const parceiro = document.getElementById("parceiro").value;
+            const status = document.getElementById("status").value;
+            const data = new Date().toLocaleString(); // Adiciona a data e hora do pedido
+
+            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+            pedidos.push({ item, quantidade, parceiro, status, data }); // Adiciona o novo pedido
+            localStorage.setItem("pedidos", JSON.stringify(pedidos));
+            alert("Pedido adicionado com sucesso!");
+
+            atualizarVisualizador(); // Atualiza a tabela após a adição
+            document.getElementById("pedidoForm").reset(); // Reseta o formulário
+        };
+
         // Atualiza a tabela ao carregar a página
         window.onload = function() {
             atualizarVisualizador();
@@ -120,4 +144,3 @@
     </script>
 </body>
 </html>
-
