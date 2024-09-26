@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Pedidos - Walterscheid Powertrain Group</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Estilos para impressão */
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: 'Poppins', sans-serif;
+            }
+            header, footer {
+                display: none; /* Esconde cabeçalho e rodapé na impressão */
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th, td {
+                border: 1px solid #ccc;
+                padding: 8px;
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <header>
+        <nav>
+            <div id="title">
+                <h1>Walterscheid Powertrain Group</h1>
+            </div>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="gerador.html">Gerar Pedido</a></li>
+                <li><a href="atualizar.html">Atualizar Pedidos</a></li>
+                <li><a href="relatorio.html">Relatório de Pedidos</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main>
+        <section>
+            <h1>Relatório de Pedidos</h1>
+            <button onclick="window.print()">Imprimir Relatório</button>
+            <table id="pedidoTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Item</th>
+                        <th>Quantidade</th>
+                        <th>Parceiro de Negócio</th>
+                        <th>Status</th>
+                        <th>Data e Hora</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Os pedidos serão inseridos aqui via JavaScript -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <!-- Rodapé -->
+    <footer>
+        <div class="footer-logo">
+            <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
+        </div>
+        <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        function atualizarRelatorio() {
+            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+            const tabela = document.getElementById("pedidoTable").querySelector("tbody");
+            tabela.innerHTML = ""; // Limpa a tabela existente
+
+            pedidos.forEach((pedido, index) => {
+                const novaLinha = tabela.insertRow();
+                novaLinha.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${pedido.item}</td>
+                    <td>${pedido.quantidade}</td>
+                    <td>${pedido.parceiro}</td>
+                    <td>${pedido.status}</td>
+                    <td>${pedido.data}</td>
+                `;
+            });
+        }
+
+        // Atualiza a tabela ao carregar a página
+        window.onload = function() {
+            atualizarRelatorio();
+        };
+    </script>
+</body>
+</html>
