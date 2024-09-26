@@ -372,43 +372,7 @@ footer p {
     box-sizing: border-box;
 }
 
-/* Fonte padrão */
-body {
-    font-family: 'Poppins', sans-serif;
-    line-height: 1.6;
-    background-color: #f4f4f4; /* Cor de fundo */
-    color: #333; /* Cor do texto */
-}
 
-/* Cabeçalho */
-header {
-    background: #333; /* Cor de fundo do cabeçalho */
-    color: #fff; /* Cor do texto do cabeçalho */
-    padding: 10px 0;
-}
-
-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 1200px;
-    margin: auto;
-    padding: 0 20px;
-}
-
-nav ul {
-    list-style: none;
-    display: flex;
-}
-
-nav ul li {
-    margin-left: 20px;
-}
-
-nav ul li a {
-    color: #fff;
-    text-decoration: none;
-}
 
 /* Estilo da seção do visualizador */
 .visualizador-section {
