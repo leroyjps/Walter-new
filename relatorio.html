@@ -57,39 +57,39 @@
         <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
     </footer>
 
-    <script>
-        function carregarRelatorio() {
-            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-            const tabela = document.getElementById("relatorioTable").querySelector("tbody");
-            tabela.innerHTML = ""; // Limpa a tabela existente
+<script>
+    function carregarRelatorio() {
+        const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+        const tabela = document.getElementById("relatorioTable").querySelector("tbody");
+        tabela.innerHTML = "";
 
-            pedidos.forEach((pedido, index) => {
-                const dataEntrada = new Date(pedido.data);
-                const dataLiberacao = pedido.status === "Liberado" ? new Date() : null; // Liberação só se o status for "Liberado"
-                const duracao = dataLiberacao ? Math.round((dataLiberacao - dataEntrada) / 60000) : "-"; // Duração em minutos
+        pedidos.forEach((pedido, index) => {
+            const dataEntrada = new Date(pedido.dataEntrada);
+            const dataLiberacao = pedido.dataLiberacao ? new Date(pedido.dataLiberacao) : null;
+            const duracao = dataLiberacao ? Math.round((dataLiberacao - dataEntrada) / 60000) : "-"; // Duração em minutos
 
-                const novaLinha = tabela.insertRow();
-                novaLinha.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${pedido.item}</td>
-                    <td>${pedido.quantidade}</td>
-                    <td>${pedido.parceiro}</td>
-                    <td>${pedido.status}</td>
-                    <td>${dataEntrada.toLocaleString()}</td>
-                    <td>${dataLiberacao ? dataLiberacao.toLocaleString() : "-"}</td>
-                    <td>${duracao}</td>
-                `;
-            });
-        }
+            const novaLinha = tabela.insertRow();
+            novaLinha.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${pedido.item}</td>
+                <td>${pedido.quantidade}</td>
+                <td>${pedido.parceiro}</td>
+                <td>${pedido.status}</td>
+                <td>${dataEntrada.toLocaleString()}</td>
+                <td>${dataLiberacao ? dataLiberacao.toLocaleString() : "-"}</td>
+                <td>${duracao !== "-" ? duracao + " min" : "-"}</td>
+            `;
+        });
+    }
 
-        document.getElementById("imprimirBtn").onclick = function() {
-            window.print(); // Imprime a página
-        };
+    document.getElementById("imprimirBtn").onclick = function() {
+        window.print();
+    };
 
-        // Carrega o relatório ao carregar a página
-        window.onload = function() {
-            carregarRelatorio();
-        };
-    </script>
+    window.onload = function() {
+        carregarRelatorio();
+    };
+</script>
+
 </body>
 </html>
