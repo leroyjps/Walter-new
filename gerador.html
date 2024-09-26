@@ -57,7 +57,8 @@
                         <th>Quantidade</th>
                         <th>Parceiro de Negócio</th>
                         <th>Status</th>
-                        <th>Data e Hora</th>
+                        <th>Data de Entrada</th>
+                        <th>Data de Liberação</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -89,7 +90,8 @@
                 quantidade,
                 parceiro,  // Atualizado para "Parceiro de Negócio"
                 status: "Não Liberado",
-                data: new Date().toLocaleString(),
+                dataEntrada: new Date().toLocaleString(), // Data de entrada
+                dataLiberacao: null // Inicialmente nulo
             };
 
             let pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
@@ -131,7 +133,8 @@
                     <td>${pedido.quantidade}</td>
                     <td>${pedido.parceiro}</td>  <!-- Atualizado para "Parceiro de Negócio" -->
                     <td>${pedido.status}</td>
-                    <td>${pedido.data}</td>
+                    <td>${pedido.dataEntrada}</td> <!-- Adiciona Data de Entrada -->
+                    <td>${pedido.dataLiberacao || 'Não Liberado'}</td> <!-- Adiciona Data de Liberação -->
                     <td>
                         <button onclick="editarPedido(${index})">Editar</button>
                         <button onclick="excluirPedido(${index})">Excluir</button>
@@ -168,3 +171,4 @@
     </script>
 </body>
 </html>
+
