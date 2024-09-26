@@ -47,7 +47,7 @@
             </form>
         </section>
 
-        <!-- Seção de Edição de Pedido -->
+        <!-- Seção de Pedidos -->
         <section>
             <h2>Pedidos</h2>
             <table id="pedidoTable">
@@ -96,9 +96,11 @@
             let pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
 
             if (pedidoIndex) {
+                // Atualiza o pedido existente
                 pedidos[pedidoIndex] = pedido;
                 alert("Pedido atualizado com sucesso!");
             } else {
+                // Adiciona novo pedido
                 pedidos.push(pedido);
                 alert("Pedido gerado com sucesso!");
             }
@@ -132,6 +134,40 @@
             });
         }
 
+        // Função para editar um pedido
+        function editarPedido(index) {
+            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+            const pedido = pedidos[index];
+
+            // Preenche o formulário com os dados do pedido selecionado
+            document.getElementById("item").value = pedido.item;
+            document.getElementById("quantidade").value = pedido.quantidade;
+            document.getElementById("parceiro").value = pedido.parceiro;
+            document.getElementById("pedidoIndex").value = index;
+
+            // Muda o botão para "Atualizar Pedido"
+            document.getElementById("submitButton").innerText = "Atualizar Pedido";
+            document.getElementById("cancelarEdicao").style.display = "block";
+        }
+
+        // Função para cancelar a edição
+        document.getElementById("cancelarEdicao").onclick = function() {
+            document.getElementById("pedidoForm").reset();
+            document.getElementById("pedidoIndex").value = "";
+            document.getElementById("submitButton").innerText = "Gerar Pedido";
+            document.getElementById("cancelarEdicao").style.display = "none";
+        };
+
+        // Função para excluir um pedido
+        function excluirPedido(index) {
+            let pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+            pedidos.splice(index, 1); // Remove o pedido do array
+            localStorage.setItem("pedidos", JSON.stringify(pedidos)); // Atualiza o localStorage
+            alert("Pedido excluído com sucesso!");
+            carregarPedidos(); // Recarrega a tabela
+        }
+
+        // Carrega os pedidos quando a página é carregada
         window.onload = function() {
             carregarPedidos();
         };
