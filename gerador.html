@@ -105,12 +105,29 @@
                 alert("Pedido gerado com sucesso!");
             }
 
-            localStorage.setItem("pedidos", JSON.stringify(pedidos));
-            document.getElementById("pedidoForm").reset();
-            document.getElementById("pedidoIndex").value = "";
-            document.getElementById("submitButton").innerText = "Gerar Pedido";
-            document.getElementById("cancelarEdicao").style.display = "none";
-            carregarPedidos();
+            // Enviar dados para o Netlify
+            fetch('/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    'form-name': 'gerar-pedido',
+                    'item': item,
+                    'quantidade': quantidade,
+                    'parceiro': parceiro,
+                    'status': pedido.status,
+                    'dataEntrada': pedido.dataEntrada,
+                    'dataLiberacao': pedido.dataLiberacao
+                })
+            })
+            .then(() => {
+                localStorage.setItem("pedidos", JSON.stringify(pedidos));
+                document.getElementById("pedidoForm").reset();
+                document.getElementById("pedidoIndex").value = "";
+                document.getElementById("submitButton").innerText = "Gerar Pedido";
+                document.getElementById("cancelarEdicao").style.display = "none";
+                carregarPedidos();
+            })
+            .catch(error => alert("Erro ao enviar o pedido: " + error));
         };
 
         function carregarPedidos() {
@@ -174,4 +191,3 @@
     </script>
 </body>
 </html>
-
