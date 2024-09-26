@@ -18,7 +18,7 @@
                 <li><a href="index.html">Home</a></li>
                 <li><a href="gerador.html">Gerar Pedido</a></li>
                 <li><a href="atualizar.html">Atualizar Pedidos</a></li>
-                 <li><a href="relatorio.html">Relatorio</a></li>
+                <li><a href="relatorio.html">Relatório</a></li>
             </ul>
         </nav>
     </header>
@@ -35,7 +35,8 @@
                         <th>Quantidade</th>
                         <th>Parceiro de Negócio</th>
                         <th>Status</th>
-                        <th>Data e Hora</th>
+                        <th>Data e Hora de Entrada</th>
+                        <th>Data e Hora de Liberação</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -43,6 +44,7 @@
                 </tbody>
             </table>
         </section>
+
         <!-- Áudio de notificação -->
         <audio id="audioNotificacao" src="components/audio/alerta.mp3" preload="auto"></audio>
     </main>
@@ -63,6 +65,12 @@
             audio.play();
         }
 
+        function formatarDataHora(dataHora) {
+            if (!dataHora) return "Não liberado"; // Caso a data de liberação ainda não exista
+            const data = new Date(dataHora);
+            return data.toLocaleString(); // Formata a data para um formato legível
+        }
+
         function atualizarVisualizador() {
             const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
             const tabela = document.getElementById("pedidoTable").querySelector("tbody");
@@ -76,7 +84,8 @@
                     <td>${pedido.quantidade}</td>
                     <td>${pedido.parceiro}</td>
                     <td>${pedido.status}</td>
-                    <td>${pedido.data}</td>
+                    <td>${formatarDataHora(pedido.dataEntrada)}</td>
+                    <td>${formatarDataHora(pedido.dataLiberacao)}</td>
                 `;
 
                 // Se for o último pedido, adicionar destaque visual
@@ -100,4 +109,3 @@
     </script>
 </body>
 </html>
-
