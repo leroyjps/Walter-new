@@ -58,7 +58,6 @@
                         <th>Parceiro de Negócio</th>
                         <th>Status</th>
                         <th>Data de Entrada</th>
-                        <th>Data de Liberação</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -88,20 +87,18 @@
             const pedido = {
                 item,
                 quantidade,
-                parceiro,  // Atualizado para "Parceiro de Negócio"
+                parceiro,
                 status: "Não Liberado",
-                dataEntrada: new Date().toLocaleString(), // Data de entrada
-                dataLiberacao: null // Inicialmente nulo
+                dataEntrada: new Date().toISOString(), // Salva a data e hora de entrada
+                dataLiberacao: null // Inicialmente nula
             };
 
             let pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
 
             if (pedidoIndex) {
-                // Atualizando pedido existente
                 pedidos[pedidoIndex] = pedido;
                 alert("Pedido atualizado com sucesso!");
             } else {
-                // Criando novo pedido
                 pedidos.push(pedido);
                 alert("Pedido gerado com sucesso!");
             }
@@ -114,13 +111,6 @@
             carregarPedidos();
         };
 
-        document.getElementById("cancelarEdicao").onclick = function() {
-            document.getElementById("pedidoForm").reset();
-            document.getElementById("pedidoIndex").value = "";
-            document.getElementById("submitButton").innerText = "Gerar Pedido";
-            document.getElementById("cancelarEdicao").style.display = "none";
-        };
-
         function carregarPedidos() {
             const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
             const tabela = document.getElementById("pedidoTable").querySelector("tbody");
@@ -131,10 +121,9 @@
                 novaLinha.innerHTML = `
                     <td>${pedido.item}</td>
                     <td>${pedido.quantidade}</td>
-                    <td>${pedido.parceiro}</td>  <!-- Atualizado para "Parceiro de Negócio" -->
+                    <td>${pedido.parceiro}</td>
                     <td>${pedido.status}</td>
-                    <td>${pedido.dataEntrada}</td> <!-- Adiciona Data de Entrada -->
-                    <td>${pedido.dataLiberacao || 'Não Liberado'}</td> <!-- Adiciona Data de Liberação -->
+                    <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
                     <td>
                         <button onclick="editarPedido(${index})">Editar</button>
                         <button onclick="excluirPedido(${index})">Excluir</button>
@@ -143,28 +132,6 @@
             });
         }
 
-        function editarPedido(index) {
-            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-            const pedido = pedidos[index];
-
-            document.getElementById("item").value = pedido.item;
-            document.getElementById("quantidade").value = pedido.quantidade;
-            document.getElementById("parceiro").value = pedido.parceiro;  // Atualizado
-            document.getElementById("pedidoIndex").value = index;
-
-            document.getElementById("submitButton").innerText = "Atualizar Pedido";
-            document.getElementById("cancelarEdicao").style.display = "inline-block";
-        }
-
-        function excluirPedido(index) {
-            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-            pedidos.splice(index, 1); // Remove o pedido pelo índice
-            localStorage.setItem("pedidos", JSON.stringify(pedidos));
-            alert("Pedido excluído com sucesso!");
-            carregarPedidos();
-        }
-
-        // Carregar pedidos ao carregar a página
         window.onload = function() {
             carregarPedidos();
         };
