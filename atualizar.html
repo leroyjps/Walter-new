@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atualizar Pedidos - Walterscheid Powertrain Group</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <header>
+        <nav>
+            <div id="title">
+                <h1>Walterscheid Powertrain Group</h1>
+            </div>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="gerador.html">Gerar Pedido</a></li>
+                <li><a href="visualizador.html">Visualizar Pedidos</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main>
+        <section>
+            <h1>Atualizar Pedidos</h1>
+            <label for="pedidoId">ID do Pedido:</label>
+            <input type="number" id="pedidoId" required>
+
+            <label for="status">Atualizar Status:</label>
+            <select id="status" required>
+                <option value="Liberado">Liberado</option>
+                <option value="Não Liberado">Não Liberado</option>
+            </select>
+
+            <button id="atualizarBtn">Atualizar Status</button>
+
+            <h2>Pedidos Existentes</h2>
+            <table id="pedidoTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Item</th>
+                        <th>Quantidade</th>
+                        <th>Parceiro de Negócio</th> <!-- Substituído de Fabricante para Parceiro de Negócio -->
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Os pedidos serão inseridos aqui via JavaScript -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+    
+    <!-- Rodapé -->
+    <footer>
+        <div class="footer-logo">
+            <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
+        </div>
+        <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        function atualizarTabela() {
+            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+            const tabela = document.getElementById("pedidoTable").querySelector("tbody");
+            tabela.innerHTML = ""; // Limpa a tabela existente
+
+            pedidos.forEach((pedido, index) => {
+                const novaLinha = tabela.insertRow();
+                novaLinha.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${pedido.item}</td>
+                    <td>${pedido.quantidade}</td>
+                    <td>${pedido.parceiro}</td> <!-- Alterado para Parceiro de Negócio -->
+                    <td>${pedido.status}</td>
+                `;
+            });
+        }
+
+        document.getElementById("atualizarBtn").onclick = function() {
+            const pedidoId = parseInt(document.getElementById("pedidoId").value) - 1; // Ajusta para o índice do array
+            const status = document.getElementById("status").value;
+
+            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+            if (pedidoId >= 0 && pedidoId < pedidos.length) {
+                pedidos[pedidoId].status = status; // Atualiza o status do pedido
+                localStorage.setItem("pedidos", JSON.stringify(pedidos));
+                alert("Status atualizado com sucesso!");
+                atualizarTabela(); // Atualiza a tabela após a alteração
+            } else {
+                alert("ID do pedido inválido!");
+            }
+        };
+
+        // Atualiza a tabela ao carregar a página
+        window.onload = function() {
+            atualizarTabela();
+        };
+    </script>
+</body>
+</html>

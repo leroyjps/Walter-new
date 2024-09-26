@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerar Pedidos - Walterscheid Powertrain Group</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <header>
+        <nav>
+            <div id="title">
+                <h1>Walterscheid Powertrain Group</h1>
+            </div>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="visualizador.html">Visualizar Pedidos</a></li>
+                <li><a href="atualizar.html">Atualizar Pedidos</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main>
+        <section>
+            <h1>Gerar/Editar Pedido</h1>
+            <!-- Formulário de Pedido -->
+            <form id="pedidoForm">
+                <label for="item">Item:</label>
+                <input type="text" id="item" required>
+                
+                <label for="quantidade">Quantidade:</label>
+                <input type="number" id="quantidade" required>
+                
+                <label for="parceiro">Parceiro de Negócio:</label>
+                <input type="text" id="parceiro" required>
+                
+                <input type="hidden" id="pedidoIndex">
+                
+                <button type="submit" id="submitButton">Gerar Pedido</button>
+                <button type="button" id="cancelarEdicao" style="display:none;">Cancelar Edição</button>
+            </form>
+        </section>
+
+        <!-- Seção de Edição de Pedido -->
+        <section>
+            <h2>Pedidos</h2>
+            <table id="pedidoTable">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantidade</th>
+                        <th>Parceiro de Negócio</th>
+                        <th>Status</th>
+                        <th>Data e Hora</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Pedidos serão carregados aqui via JavaScript -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <!-- Rodapé -->
+    <footer>
+        <div class="footer-logo">
+            <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
+        </div>
+        <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        document.getElementById("pedidoForm").onsubmit = function(e) {
+            e.preventDefault();
+            const item = document.getElementById("item").value;
+            const quantidade = document.getElementById("quantidade").value;
+            const parceiro = document.getElementById("parceiro").value;
+            const pedidoIndex = document.getElementById("pedidoIndex").value;
+
+            const pedido = {
+                item,
+                quantidade,
+                parceiro,  // Atualizado para "Parceiro de Negócio"
+                status: "Não Liberado",
+                data: new Date().toLocaleString(),
+            };
+
+            let pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+
+            if (pedidoIndex) {
+                // Atualizando pedido existente
+                pedidos[pedidoIndex] = pedido;
+                alert("Pedido atualizado com sucesso!");
+            } else {
+                // Criando novo pedido
+                pedidos.push(pedido);
+                alert("Pedido gerado com sucesso!");
+            }
+
+            localStorage.setItem("pedidos", JSON.stringify(pedidos));
+            document.getElementById("pedidoForm").reset();
+            document.getElementById("pedidoIndex").value = "";
+            document.getElementById("submitButton").innerText = "Gerar Pedido";
+            document.getElementById("cancelarEdicao").style.display = "none";
+            carregarPedidos();
+        };
+
+        document.getElementById("cancelarEdicao").onclick = function() {
+            document.getElementById("pedidoForm").reset();
+            document.getElementById("pedidoIndex").value = "";
+            document.getElementById("submitButton").innerText = "Gerar Pedido";
+            document.getElementById("cancelarEdicao").style.display = "none";
+        };
+
+        function carregarPedidos() {
+            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+            const tabela = document.getElementById("pedidoTable").querySelector("tbody");
+            tabela.innerHTML = "";
+
+            pedidos.forEach((pedido, index) => {
+                const novaLinha = tabela.insertRow();
+                novaLinha.innerHTML = `
+                    <td>${pedido.item}</td>
+                    <td>${pedido.quantidade}</td>
+                    <td>${pedido.parceiro}</td>  <!-- Atualizado para "Parceiro de Negócio" -->
+                    <td>${pedido.status}</td>
+                    <td>${pedido.data}</td>
+                    <td>
+                        <button onclick="editarPedido(${index})">Editar</button>
+                        <button onclick="excluirPedido(${index})">Excluir</button>
+                    </td>
+                `;
+            });
+        }
+
+        function editarPedido(index) {
+            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+            const pedido = pedidos[index];
+
+            document.getElementById("item").value = pedido.item;
+            document.getElementById("quantidade").value = pedido.quantidade;
+            document.getElementById("parceiro").value = pedido.parceiro;  // Atualizado
+            document.getElementById("pedidoIndex").value = index;
+
+            document.getElementById("submitButton").innerText = "Atualizar Pedido";
+            document.getElementById("cancelarEdicao").style.display = "inline-block";
+        }
+
+        function excluirPedido(index) {
+            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+            pedidos.splice(index, 1); // Remove o pedido pelo índice
+            localStorage.setItem("pedidos", JSON.stringify(pedidos));
+            alert("Pedido excluído com sucesso!");
+            carregarPedidos();
+        }
+
+        // Carregar pedidos ao carregar a página
+        window.onload = function() {
+            carregarPedidos();
+        };
+    </script>
+</body>
+</html>
