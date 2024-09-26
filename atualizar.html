@@ -68,45 +68,51 @@
         <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
     </footer>
 
-    <script>
-        function atualizarTabela() {
-            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-            const tabela = document.getElementById("pedidoTable").querySelector("tbody");
-            tabela.innerHTML = ""; // Limpa a tabela existente
+  <script>
+    document.getElementById("atualizarBtn").onclick = function(e) {
+        e.preventDefault();
+        const pedidoId = parseInt(document.getElementById("pedidoId").value) - 1;
+        const status = document.getElementById("status").value;
 
-            pedidos.forEach((pedido, index) => {
-                const novaLinha = tabela.insertRow();
-                novaLinha.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${pedido.item}</td>
-                    <td>${pedido.quantidade}</td>
-                    <td>${pedido.parceiro}</td> <!-- Atualizado -->
-                    <td>${pedido.status}</td>
-                `;
-            });
-        }
+        const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+        if (pedidoId >= 0 && pedidoId < pedidos.length) {
+            pedidos[pedidoId].status = status; 
 
-        document.getElementById("atualizarBtn").onclick = function(e) {
-            e.preventDefault();
-            const pedidoId = parseInt(document.getElementById("pedidoId").value) - 1; // Ajusta para o índice do array
-            const status = document.getElementById("status").value;
-
-            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-            if (pedidoId >= 0 && pedidoId < pedidos.length) {
-                pedidos[pedidoId].status = status; // Atualiza o status do pedido
-                localStorage.setItem("pedidos", JSON.stringify(pedidos));
-                alert("Status atualizado com sucesso!");
-                atualizarTabela(); // Atualiza a tabela após a alteração
-            } else {
-                alert("ID do pedido inválido!");
+            // Atualiza a data de liberação se o status for "Liberado"
+            if (status === "Liberado") {
+                pedidos[pedidoId].dataLiberacao = new Date().toISOString();
             }
-        };
 
-        // Atualiza a tabela ao carregar a página
-        window.onload = function() {
+            localStorage.setItem("pedidos", JSON.stringify(pedidos));
+            alert("Status atualizado com sucesso!");
             atualizarTabela();
-        };
-    </script>
+        } else {
+            alert("ID do pedido inválido!");
+        }
+    };
+
+    function atualizarTabela() {
+        const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+        const tabela = document.getElementById("pedidoTable").querySelector("tbody");
+        tabela.innerHTML = "";
+
+        pedidos.forEach((pedido, index) => {
+            const novaLinha = tabela.insertRow();
+            novaLinha.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${pedido.item}</td>
+                <td>${pedido.quantidade}</td>
+                <td>${pedido.parceiro}</td>
+                <td>${pedido.status}</td>
+            `;
+        });
+    }
+
+    window.onload = function() {
+        atualizarTabela();
+    };
+</script>
+
 </body>
 </html>
 
