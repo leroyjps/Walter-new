@@ -26,16 +26,21 @@
     <main>
         <section>
             <h1>Atualizar Pedidos</h1>
-            <label for="pedidoId">ID do Pedido:</label>
-            <input type="number" id="pedidoId" required>
+            <form id="atualizarForm" name="atualizar-pedido" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+                <input type="hidden" name="bot-field">
+                <input type="hidden" name="form-name" value="atualizar-pedido">
 
-            <label for="status">Atualizar Status:</label>
-            <select id="status" required>
-                <option value="Liberado">Liberado</option>
-                <option value="Não Liberado">Não Liberado</option>
-            </select>
+                <label for="pedidoId">ID do Pedido:</label>
+                <input type="number" id="pedidoId" name="pedidoId" required>
 
-            <button id="atualizarBtn">Atualizar Status</button>
+                <label for="status">Atualizar Status:</label>
+                <select id="status" name="status" required>
+                    <option value="Liberado">Liberado</option>
+                    <option value="Não Liberado">Não Liberado</option>
+                </select>
+
+                <button id="atualizarBtn" type="submit">Atualizar Status</button>
+            </form>
 
             <h2>Pedidos Existentes</h2>
             <table id="pedidoTable">
@@ -44,7 +49,7 @@
                         <th>ID</th>
                         <th>Item</th>
                         <th>Quantidade</th>
-                        <th>Parceiro de Negócio</th> <!-- Substituído de Fabricante para Parceiro de Negócio -->
+                        <th>Parceiro de Negócio</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -75,13 +80,14 @@
                     <td>${index + 1}</td>
                     <td>${pedido.item}</td>
                     <td>${pedido.quantidade}</td>
-                    <td>${pedido.parceiro}</td> <!-- Alterado para Parceiro de Negócio -->
+                    <td>${pedido.parceiro}</td>
                     <td>${pedido.status}</td>
                 `;
             });
         }
 
-        document.getElementById("atualizarBtn").onclick = function() {
+        document.getElementById("atualizarBtn").onclick = function(e) {
+            e.preventDefault();
             const pedidoId = parseInt(document.getElementById("pedidoId").value) - 1; // Ajusta para o índice do array
             const status = document.getElementById("status").value;
 
@@ -103,3 +109,4 @@
     </script>
 </body>
 </html>
+
