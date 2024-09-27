@@ -1,0 +1,19 @@
+document.getElementById("pedidoForm").onsubmit = async function(e) {
+    e.preventDefault();
+
+    const item = document.getElementById("item").value;
+    const quantidade = document.getElementById("quantidade").value;
+    const parceiro = document.getElementById("parceiro").value;
+
+    const response = await fetch("/.netlify/functions/salvarPedido", {
+      method: "POST",
+      body: JSON.stringify({ item, quantidade, parceiro }),
+    });
+
+    if (response.ok) {
+      alert("Pedido salvo com sucesso!");
+      document.getElementById("pedidoForm").reset();
+    } else {
+      alert("Erro ao salvar o pedido.");
+    }
+};
