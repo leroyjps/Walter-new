@@ -16,7 +16,7 @@
             </div>
             <ul>
                 <li><a href="index.html">Home</a></li>
-                <li><a href="gerar-pedido.html">Gerar Pedidos</a></li>
+                <li><a href="gerar.html">Gerar Pedidos</a></li>
                 <li><a href="atualizar.html">Atualizar Pedidos</a></li>
             </ul>
         </nav>
@@ -35,6 +35,8 @@
                         <th>Parceiro de Negócio</th>
                         <th>Data de Entrada</th>
                         <th>Data de Saída</th>
+                        <th>Status</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,11 +54,17 @@
         <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
     </footer>
 
+    <!-- Áudio de Notificação -->
+    <audio id="notificacaoAudio" src="audio/alerta.mp3" preload="auto"></audio>
+
     <script>
+        let pedidosAnteriores = [];
+
         function carregarPedidos() {
             fetch('https://api.netlify.com/api/v1/forms/66f5a99aea4c280008f95347/submissions', {
+                method: 'GET',
                 headers: {
-                    Authorization: 'nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5' // Substitua pelo seu token de acesso
+                    'Authorization': 'Bearer nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5'
                 }
             })
             .then(response => response.json())
@@ -64,27 +72,71 @@
                 const tabela = document.getElementById("pedidoTable").querySelector("tbody");
                 tabela.innerHTML = "";
 
-                data.forEach(pedido => {
+                data.forEach((pedido, index) => {
+                    const formData = pedido.data; // Dados do formulário
                     const novaLinha = tabela.insertRow();
-                    const { item, quantidade, parceiro, status, dataEntrada, dataLiberacao } = pedido.data; // Ajuste conforme a estrutura do objeto
 
+                    // Adiciona as informações necessárias
                     novaLinha.innerHTML = `
-                        <td>${pedido.id}</td> <!-- Exibindo o ID do pedido -->
-                        <td>${item}</td>
-                        <td>${quantidade}</td>
-                        <td>${parceiro}</td>
-                        <td>${new Date(dataEntrada).toLocaleString()}</td>
-                        <td>${dataLiberacao ? new Date(dataLiberacao).toLocaleString() : 'Não Liberado'}</td>
+                        <td>${pedido.id}</td>
+                        <td>${formData.item}</td>
+                        <td>${formData.quantidade}</td>
+                        <td>${formData.parceiro}</td>
+                        <td>${new Date(formData.dataEntrada).toLocaleString()}</td>
+                        <td>${formData.dataLiberacao ? new Date(formData.dataLiberacao).toLocaleString() : "Não Liberado"}</td>
+                        <td>${formData.status}</td>
+                        <td>
+                            <button onclick="atualizarStatus('${pedido.id}')">Atualizar Status</button>
+                        </td>
                     `;
                 });
+
+                // Verifica se há novos pedidos e toca o áudio de notificação
+                if (pedidosAnteriores.length && data.length > pedidosAnteriores.length) {
+                    tocarNotificacao();
+                }
+
+                // Atualiza a lista de pedidos anteriores
+                pedidosAnteriores = data;
             })
-            .catch(error => console.error("Erro ao carregar pedidos:", error));
+            .catch(error => alert("Erro ao carregar os pedidos: " + error));
         }
 
-        // Carrega os pedidos quando a página é carregada
+        function tocarNotificacao() {
+            const audio = document.getElementById("notificacaoAudio");
+            audio.play().catch(error => console.error("Erro ao tocar o áudio:", error));
+        }
+
+        function atualizarStatus(id) {
+            const novoStatus = prompt("Digite o novo status para o pedido:");
+            if (novoStatus) {
+                fetch(`https://api.netlify.com/api/v1/forms/66f5a99aea4c280008f95347/submissions/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        data: {
+                            status: novoStatus
+                        }
+                    })
+                })
+                .then(() => {
+                    alert("Status atualizado com sucesso!");
+                    carregarPedidos();
+                })
+                .catch(error => alert("Erro ao atualizar o status: " + error));
+            }
+        }
+
         window.onload = function() {
             carregarPedidos();
         };
+
+        // Recarregar os pedidos a cada 1 minuto
+        setInterval(carregarPedidos, 60000);
     </script>
 </body>
 </html>
+
