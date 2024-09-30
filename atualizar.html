@@ -18,6 +18,7 @@
                 <li><a href="index.html">Home</a></li>
                 <li><a href="gerador.html">Gerar Pedido</a></li>
                 <li><a href="visualizador.html">Visualizar Pedidos</a></li>
+                <li><a href="relatorio.html">Relatório</a></li>
             </ul>
         </nav>
     </header>
@@ -25,42 +26,26 @@
     <!-- Conteúdo Principal -->
     <main>
         <section>
-            <h1>Atualizar Pedidos</h1>
-            <form id="atualizarForm" name="atualizar-pedido" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-                <input type="hidden" name="bot-field">
-                <input type="hidden" name="form-name" value="atualizar-pedido">
-
-                <label for="pedidoId">ID do Pedido:</label>
-                <input type="number" id="pedidoId" name="pedidoId" required>
-
-                <label for="status">Atualizar Status:</label>
-                <select id="status" name="status" required>
-                    <option value="Liberado">Liberado</option>
-                    <option value="Não Liberado">Não Liberado</option>
-                </select>
-
-                <button id="atualizarBtn" type="submit">Atualizar Status</button>
-            </form>
-
-            <h2>Pedidos Existentes</h2>
+            <h1>Atualizar Pedido</h1>
             <table id="pedidoTable">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Item</th>
                         <th>Quantidade</th>
-                        <th>Parceiro de Negócio</th> <!-- Atualizado -->
+                        <th>Parceiro de Negócio</th>
                         <th>Status</th>
+                        <th>Data de Entrada</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Os pedidos serão inseridos aqui via JavaScript -->
+                    <!-- Pedidos serão carregados aqui via JavaScript -->
                 </tbody>
             </table>
         </section>
     </main>
-    
-    <!-- Rodapé -->
+
     <footer>
         <div class="footer-logo">
             <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
@@ -68,51 +53,44 @@
         <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
     </footer>
 
-  <script>
-    document.getElementById("atualizarBtn").onclick = function(e) {
-        e.preventDefault();
-        const pedidoId = parseInt(document.getElementById("pedidoId").value) - 1;
-        const status = document.getElementById("status").value;
+    <script>
+        const formID = "66f5a99aea4c280008f95347";
+        const token = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5";
 
-        const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-        if (pedidoId >= 0 && pedidoId < pedidos.length) {
-            pedidos[pedidoId].status = status; 
+        function fetchPedidos() {
+            fetch(`https://api.netlify.com/api/v1/forms/${formID}/submissions`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const tabela = document.getElementById("pedidoTable").querySelector("tbody");
+                tabela.innerHTML = "";
 
-            // Atualiza a data de liberação se o status for "Liberado"
-            if (status === "Liberado") {
-                pedidos[pedidoId].dataLiberacao = new Date().toISOString();
-            }
-
-            localStorage.setItem("pedidos", JSON.stringify(pedidos));
-            alert("Status atualizado com sucesso!");
-            atualizarTabela();
-        } else {
-            alert("ID do pedido inválido!");
+                data.forEach((pedido, index) => {
+                    const novaLinha = tabela.insertRow();
+                    novaLinha.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${pedido.data.item}</td>
+                        <td>${pedido.data.quantidade}</td>
+                        <td>${pedido.data.parceiro}</td>
+                        <td><input type="text" value="${pedido.data.status || 'Não Liberado'}"></td>
+                        <td>${new Date(pedido.created_at).toLocaleString()}</td>
+                        <td><button onclick="atualizarStatus(${pedido.id})">Atualizar</button></td>
+                    `;
+                });
+            })
+            .catch(error => console.error("Erro ao buscar pedidos:", error));
         }
-    };
 
-    function atualizarTabela() {
-        const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-        const tabela = document.getElementById("pedidoTable").querySelector("tbody");
-        tabela.innerHTML = "";
+        function atualizarStatus(id) {
+            // Lógica para atualizar o status via API do Netlify Forms
+        }
 
-        pedidos.forEach((pedido, index) => {
-            const novaLinha = tabela.insertRow();
-            novaLinha.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${pedido.item}</td>
-                <td>${pedido.quantidade}</td>
-                <td>${pedido.parceiro}</td>
-                <td>${pedido.status}</td>
-            `;
-        });
-    }
-
-    window.onload = function() {
-        atualizarTabela();
-    };
-</script>
-
+        window.onload = function() {
+            fetchPedidos();
+        };
+    </script>
 </body>
 </html>
-
