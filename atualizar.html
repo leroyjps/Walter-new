@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Cabeçalho -->
     <header>
         <nav>
             <div id="title">
@@ -22,7 +21,6 @@
         </nav>
     </header>
 
-    <!-- Conteúdo Principal -->
     <main>
         <section>
             <h1>Atualizar Pedidos</h1>
@@ -55,7 +53,6 @@
         </section>
     </main>
     
-    <!-- Rodapé -->
     <footer>
         <div class="footer-logo">
             <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
@@ -64,14 +61,28 @@
     </footer>
 
     <script>
-        // Função para buscar os pedidos existentes do banco de dados
-        async function carregarPedidos() {
-            const response = await fetch('/.netlify/functions/buscarPedidos');
-            const pedidos = await response.json();
-            atualizarTabela(pedidos);
+        const formId = '66f5a8b93e0f76000838d52c'; // ID do seu formulário
+
+        async function fetchPedidos() {
+            try {
+                const response = await fetch(`https://api.netlify.com/api/v1/forms/${formId}/submissions`, {
+                    headers: {
+                        Authorization: `Bearer nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5` // Token de acesso
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao buscar pedidos');
+                }
+
+                const data = await response.json();
+                atualizarTabela(data);
+            } catch (error) {
+                console.error(error);
+                alert('Não foi possível carregar os pedidos');
+            }
         }
 
-        // Atualiza a tabela de pedidos
         function atualizarTabela(pedidos) {
             const tabela = document.getElementById("pedidoTable").querySelector("tbody");
             tabela.innerHTML = ""; // Limpa a tabela existente
@@ -80,38 +91,45 @@
                 const novaLinha = tabela.insertRow();
                 novaLinha.innerHTML = `
                     <td>${pedido.id}</td>
-                    <td>${pedido.item}</td>
-                    <td>${pedido.quantidade}</td>
-                    <td>${pedido.parceiro}</td>
-                    <td>${pedido.status}</td>
+                    <td>${pedido.data.item}</td>
+                    <td>${pedido.data.quantidade}</td>
+                    <td>${pedido.data.parceiro}</td>
+                    <td>${pedido.data.status}</td>
                 `;
             });
         }
 
-        // Função para atualizar o status do pedido
         document.getElementById("atualizarBtn").onclick = async function() {
-            const pedidoId = parseInt(document.getElementById("pedidoId").value);
+            const pedidoId = parseInt(document.getElementById("pedidoId").value); // ID do pedido a ser atualizado
             const status = document.getElementById("status").value;
 
-            if (pedidoId && status) {
-                const response = await fetch('/.netlify/functions/atualizarPedido', {
-                    method: 'POST',
-                    body: JSON.stringify({ pedidoId, status }),
-                    headers: { 'Content-Type': 'application/json' }
+            try {
+                const response = await fetch(`https://api.netlify.com/api/v1/forms/${formId}/submissions/${pedidoId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5` // Token de acesso
+                    },
+                    body: JSON.stringify({ status }) // Atualiza apenas o status
                 });
 
-                const result = await response.json();
-                alert(result.message);
-                carregarPedidos(); // Atualiza a tabela após a alteração
-            } else {
-                alert("Por favor, preencha o ID do pedido e o status.");
+                if (!response.ok) {
+                    throw new Error('Erro ao atualizar o pedido');
+                }
+
+                alert("Status atualizado com sucesso!");
+                fetchPedidos(); // Atualiza a tabela após a alteração
+            } catch (error) {
+                console.error(error);
+                alert('Não foi possível atualizar o pedido');
             }
         };
 
         // Atualiza a tabela ao carregar a página
         window.onload = function() {
-            carregarPedidos();
+            fetchPedidos();
         };
     </script>
 </body>
 </html>
+
