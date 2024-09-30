@@ -18,7 +18,6 @@
                 <li><a href="index.html">Home</a></li>
                 <li><a href="gerador.html">Gerar Pedido</a></li>
                 <li><a href="visualizador.html">Visualizar Pedidos</a></li>
-                <li><a href="relatorio.html">Relatório</a></li>
             </ul>
         </nav>
     </header>
@@ -26,7 +25,19 @@
     <!-- Conteúdo Principal -->
     <main>
         <section>
-            <h1>Atualizar Pedido</h1>
+            <h1>Atualizar Pedidos</h1>
+            <label for="pedidoId">ID do Pedido:</label>
+            <input type="number" id="pedidoId" required>
+
+            <label for="status">Atualizar Status:</label>
+            <select id="status" required>
+                <option value="Liberado">Liberado</option>
+                <option value="Não Liberado">Não Liberado</option>
+            </select>
+
+            <button id="atualizarBtn">Atualizar Status</button>
+
+            <h2>Pedidos Existentes</h2>
             <table id="pedidoTable">
                 <thead>
                     <tr>
@@ -35,17 +46,16 @@
                         <th>Quantidade</th>
                         <th>Parceiro de Negócio</th>
                         <th>Status</th>
-                        <th>Data de Entrada</th>
-                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Pedidos serão carregados aqui via JavaScript -->
+                    <!-- Os pedidos serão inseridos aqui via JavaScript -->
                 </tbody>
             </table>
         </section>
     </main>
-
+    
+    <!-- Rodapé -->
     <footer>
         <div class="footer-logo">
             <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
@@ -54,42 +64,53 @@
     </footer>
 
     <script>
-        const formID = "66f5a99aea4c280008f95347";
-        const token = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5";
+        // Função para buscar os pedidos existentes do banco de dados
+        async function carregarPedidos() {
+            const response = await fetch('/.netlify/functions/buscarPedidos');
+            const pedidos = await response.json();
+            atualizarTabela(pedidos);
+        }
 
-        function fetchPedidos() {
-            fetch(`https://api.netlify.com/api/v1/forms/${formID}/submissions`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const tabela = document.getElementById("pedidoTable").querySelector("tbody");
-                tabela.innerHTML = "";
+        // Atualiza a tabela de pedidos
+        function atualizarTabela(pedidos) {
+            const tabela = document.getElementById("pedidoTable").querySelector("tbody");
+            tabela.innerHTML = ""; // Limpa a tabela existente
 
-                data.forEach((pedido, index) => {
-                    const novaLinha = tabela.insertRow();
-                    novaLinha.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${pedido.data.item}</td>
-                        <td>${pedido.data.quantidade}</td>
-                        <td>${pedido.data.parceiro}</td>
-                        <td><input type="text" value="${pedido.data.status || 'Não Liberado'}"></td>
-                        <td>${new Date(pedido.created_at).toLocaleString()}</td>
-                        <td><button onclick="atualizarStatus(${pedido.id})">Atualizar</button></td>
-                    `;
+            pedidos.forEach((pedido) => {
+                const novaLinha = tabela.insertRow();
+                novaLinha.innerHTML = `
+                    <td>${pedido.id}</td>
+                    <td>${pedido.item}</td>
+                    <td>${pedido.quantidade}</td>
+                    <td>${pedido.parceiro}</td>
+                    <td>${pedido.status}</td>
+                `;
+            });
+        }
+
+        // Função para atualizar o status do pedido
+        document.getElementById("atualizarBtn").onclick = async function() {
+            const pedidoId = parseInt(document.getElementById("pedidoId").value);
+            const status = document.getElementById("status").value;
+
+            if (pedidoId && status) {
+                const response = await fetch('/.netlify/functions/atualizarPedido', {
+                    method: 'POST',
+                    body: JSON.stringify({ pedidoId, status }),
+                    headers: { 'Content-Type': 'application/json' }
                 });
-            })
-            .catch(error => console.error("Erro ao buscar pedidos:", error));
-        }
 
-        function atualizarStatus(id) {
-            // Lógica para atualizar o status via API do Netlify Forms
-        }
+                const result = await response.json();
+                alert(result.message);
+                carregarPedidos(); // Atualiza a tabela após a alteração
+            } else {
+                alert("Por favor, preencha o ID do pedido e o status.");
+            }
+        };
 
+        // Atualiza a tabela ao carregar a página
         window.onload = function() {
-            fetchPedidos();
+            carregarPedidos();
         };
     </script>
 </body>
