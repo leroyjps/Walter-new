@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerar ou Editar Pedidos - Walterscheid Powertrain Group</title>
+    <title>Gerar Pedido - Walterscheid Powertrain Group</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Cabeçalho -->
     <header>
         <nav>
             <div id="title">
@@ -16,23 +15,17 @@
             </div>
             <ul>
                 <li><a href="index.html">Home</a></li>
+                <li><a href="gerador.html">Gerar Pedido</a></li>
                 <li><a href="visualizador.html">Visualizar Pedidos</a></li>
                 <li><a href="atualizar.html">Atualizar Pedidos</a></li>
-                <li><a href="relatorio.html">Relatório</a></li>
             </ul>
         </nav>
     </header>
 
-    <!-- Conteúdo Principal -->
     <main>
         <section>
-            <h1>Gerar ou Editar Pedido</h1>
-            <!-- Formulário de Pedido -->
-            <form id="pedidoForm" name="gerar-pedido" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-                <input type="hidden" name="bot-field">
-                <input type="hidden" name="form-name" value="gerar-pedido">
-                <input type="hidden" id="pedidoId" name="pedidoId" value="">
-
+            <h1>Gerar Pedido</h1>
+            <form id="pedidoForm" action="https://submit-form.com/your-form-id" method="POST">
                 <label for="item">Item:</label>
                 <input type="text" id="item" name="item" required>
                 
@@ -42,136 +35,17 @@
                 <label for="parceiro">Parceiro de Negócio:</label>
                 <input type="text" id="parceiro" name="parceiro" required>
                 
-                <button type="submit" id="submitButton">Gerar Pedido</button>
-                <button type="button" id="updateButton" style="display:none;">Atualizar Pedido</button>
+                <button type="submit">Enviar Pedido</button>
             </form>
-        </section>
-
-        <section class="existing-pedidos">
-            <h2>Pedidos Existentes</h2>
-            <table id="pedidoTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Item</th>
-                        <th>Quantidade</th>
-                        <th>Parceiro de Negócio</th>
-                        <th>Status</th>
-                        <th>Data de Entrada</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Os pedidos serão inseridos aqui via JavaScript -->
-                </tbody>
-            </table>
         </section>
     </main>
 
-    <!-- Rodapé -->
     <footer>
         <div class="footer-logo">
             <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
         </div>
         <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
     </footer>
-
-    <script>
-        const formID = "66f5a99aea4c280008f95347";
-        const token = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5";
-
-        function fetchPedidos() {
-            fetch(`https://api.netlify.com/api/v1/forms/${formID}/submissions`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const tabela = document.getElementById("pedidoTable").querySelector("tbody");
-                tabela.innerHTML = "";
-
-                data.forEach((pedido, index) => {
-                    const novaLinha = tabela.insertRow();
-                    novaLinha.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${pedido.data.item}</td>
-                        <td>${pedido.data.quantidade}</td>
-                        <td>${pedido.data.parceiro}</td>
-                        <td>${pedido.data.status || 'Não Liberado'}</td>
-                        <td>${new Date(pedido.created_at).toLocaleString()}</td>
-                        <td>
-                            <button onclick="editarPedido('${pedido.id}', '${pedido.data.item}', '${pedido.data.quantidade}', '${pedido.data.parceiro}')">Editar</button>
-                            <button onclick="excluirPedido('${pedido.id}')">Excluir</button>
-                        </td>
-                    `;
-                });
-            })
-            .catch(error => console.error("Erro ao buscar pedidos:", error));
-        }
-
-        // Função para editar pedido
-        function editarPedido(id, item, quantidade, parceiro) {
-            document.getElementById('pedidoId').value = id;
-            document.getElementById('item').value = item;
-            document.getElementById('quantidade').value = quantidade;
-            document.getElementById('parceiro').value = parceiro;
-            
-            document.getElementById('submitButton').style.display = 'none';
-            document.getElementById('updateButton').style.display = 'inline';
-        }
-
-        // Função para excluir pedido
-        function excluirPedido(id) {
-            if (confirm("Tem certeza de que deseja excluir este pedido?")) {
-                fetch(`https://api.netlify.com/api/v1/submissions/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                })
-                .then(() => {
-                    alert("Pedido excluído com sucesso.");
-                    fetchPedidos(); // Atualiza a lista de pedidos
-                })
-                .catch(error => console.error("Erro ao excluir pedido:", error));
-            }
-        }
-
-        // Função para atualizar pedido
-        document.getElementById('updateButton').addEventListener('click', function() {
-            const id = document.getElementById('pedidoId').value;
-            const item = document.getElementById('item').value;
-            const quantidade = document.getElementById('quantidade').value;
-            const parceiro = document.getElementById('parceiro').value;
-
-            fetch(`https://api.netlify.com/api/v1/submissions/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    data: {
-                        item,
-                        quantidade,
-                        parceiro
-                    }
-                })
-            })
-            .then(() => {
-                alert("Pedido atualizado com sucesso.");
-                fetchPedidos(); // Atualiza a lista de pedidos
-                document.getElementById('submitButton').style.display = 'inline';
-                document.getElementById('updateButton').style.display = 'none';
-                document.getElementById('pedidoForm').reset();
-            })
-            .catch(error => console.error("Erro ao atualizar pedido:", error));
-        });
-
-        window.onload = function() {
-            fetchPedidos();
-        };
-    </script>
 </body>
 </html>
+
