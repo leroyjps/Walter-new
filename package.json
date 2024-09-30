@@ -1,19 +1,27 @@
 {
-    "name": "gerador-pedidos",
-    "version": "1.0.0",
-    "description": "Gerador e visualizador de pedidos",
-    "main": "index.js",
-    "scripts": {
-      "start": "netlify dev",
-      "build": "netlify build"
-    },
-    "dependencies": {
-      "mysql2": "^2.3.3", 
-      "dotenv": "^10.0.0" // Para usar variáveis de ambiente
-    },
-    "devDependencies": {
-      "netlify-cli": "^12.0.0"
-    },
-    "license": "MIT"
+  "name": "walter-new",
+  "version": "1.0.0",
+  "description": "Projeto Walterscheid",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "build": "webpack --mode production",
+    "dev": "webpack --mode development"
+  },
+  "author": "Mauricio Ferreira",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.18.2",
+    "mysql2": "^3.0.0",
+    "body-parser": "^1.20.1",
+    "axios": "^0.27.2"
+  },
+  "devDependencies": {
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
-  
+}
