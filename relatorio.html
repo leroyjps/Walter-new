@@ -27,25 +27,9 @@
     <main>
         <section>
             <h1>Relatório de Pedidos</h1>
-            <table id="relatorioTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Item</th>
-                        <th>Quantidade</th>
-                        <th>Parceiro de Negócio</th>
-                        <th>Status</th>
-                        <th>Data e Hora de Entrada</th>
-                        <th>Data e Hora de Liberação</th>
-                        <th>Duração (min)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Os pedidos serão inseridos aqui via JavaScript -->
-                </tbody>
-            </table>
-
-            <button id="imprimirBtn">Imprimir Relatório</button>
+            <div id="relatorioContainer">
+                <!-- Aqui será exibido um relatório visual baseado nos dados -->
+            </div>
         </section>
     </main>
 
@@ -57,39 +41,28 @@
         <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
     </footer>
 
-<script>
-    function carregarRelatorio() {
-        const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-        const tabela = document.getElementById("relatorioTable").querySelector("tbody");
-        tabela.innerHTML = "";
+    <script>
+        const formID = "66f5a99aea4c280008f95347";
+        const token = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5";
 
-        pedidos.forEach((pedido, index) => {
-            const dataEntrada = new Date(pedido.dataEntrada);
-            const dataLiberacao = pedido.dataLiberacao ? new Date(pedido.dataLiberacao) : null;
-            const duracao = dataLiberacao ? Math.round((dataLiberacao - dataEntrada) / 60000) : "-"; // Duração em minutos
+        function fetchRelatorio() {
+            fetch(`https://api.netlify.com/api/v1/forms/${formID}/submissions`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const relatorioContainer = document.getElementById("relatorioContainer");
+                // Adicionar lógica de relatório gráfico ou visual com base nos dados recebidos
+            })
+            .catch(error => console.error("Erro ao buscar o relatório:", error));
+        }
 
-            const novaLinha = tabela.insertRow();
-            novaLinha.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${pedido.item}</td>
-                <td>${pedido.quantidade}</td>
-                <td>${pedido.parceiro}</td>
-                <td>${pedido.status}</td>
-                <td>${dataEntrada.toLocaleString()}</td>
-                <td>${dataLiberacao ? dataLiberacao.toLocaleString() : "-"}</td>
-                <td>${duracao !== "-" ? duracao + " min" : "-"}</td>
-            `;
-        });
-    }
-
-    document.getElementById("imprimirBtn").onclick = function() {
-        window.print();
-    };
-
-    window.onload = function() {
-        carregarRelatorio();
-    };
-</script>
-
+        window.onload = function() {
+            fetchRelatorio();
+        };
+    </script>
 </body>
 </html>
+
