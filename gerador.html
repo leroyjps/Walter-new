@@ -25,18 +25,27 @@
     <main>
         <section>
             <h1>Gerar Pedido</h1>
-            <form id="pedidoForm" action="https://submit-form.com/your-form-id" method="POST">
-                <label for="item">Item:</label>
-                <input type="text" id="item" name="item" required>
-                
-                <label for="quantidade">Quantidade:</label>
-                <input type="number" id="quantidade" name="quantidade" required>
-                
-                <label for="parceiro">Parceiro de Negócio:</label>
-                <input type="text" id="parceiro" name="parceiro" required>
-                
-                <button type="submit">Enviar Pedido</button>
-            </form>
+          <form name="pedido" method="POST" data-netlify="true">
+    <input type="hidden" name="form-name" value="pedido">
+    
+    <label for="item">Item:</label>
+    <input type="text" name="item" id="item" required>
+    
+    <label for="quantidade">Quantidade:</label>
+    <input type="number" name="quantidade" id="quantidade" required>
+    
+    <label for="parceiro">Parceiro de Negócio:</label>
+    <input type="text" name="parceiro" id="parceiro" required>
+    
+    <label for="status">Status:</label>
+    <select name="status" id="status" required>
+        <option value="Liberado">Liberado</option>
+        <option value="Não Liberado">Não Liberado</option>
+    </select>
+    
+    <button type="submit">Enviar Pedido</button>
+</form>
+
         </section>
     </main>
 
