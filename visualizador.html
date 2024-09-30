@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Cabeçalho -->
     <header>
         <nav>
             <div id="title">
@@ -15,13 +16,13 @@
             </div>
             <ul>
                 <li><a href="index.html">Home</a></li>
-                <li><a href="gerador.html">Gerar Pedido</a></li>
-                <li><a href="visualizador.html">Visualizar Pedidos</a></li>
+                <li><a href="gerar-pedido.html">Gerar Pedidos</a></li>
                 <li><a href="atualizar.html">Atualizar Pedidos</a></li>
             </ul>
         </nav>
     </header>
 
+    <!-- Conteúdo Principal -->
     <main>
         <section>
             <h1>Visualizar Pedidos</h1>
@@ -32,16 +33,18 @@
                         <th>Item</th>
                         <th>Quantidade</th>
                         <th>Parceiro de Negócio</th>
-                        <th>Status</th>
+                        <th>Data de Entrada</th>
+                        <th>Data de Saída</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Os pedidos serão inseridos aqui via JavaScript -->
+                    <!-- Pedidos serão carregados aqui via JavaScript -->
                 </tbody>
             </table>
         </section>
     </main>
 
+    <!-- Rodapé -->
     <footer>
         <div class="footer-logo">
             <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
@@ -50,52 +53,38 @@
     </footer>
 
     <script>
-        async function buscarPedidos() {
-            const NETLIFY_TOKEN = 'nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5';
-            const FORM_ID = '66f5a99aea4c280008f95347';
-            const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions`;
-
-            const response = await fetch(url, {
-                method: 'GET',
+        function carregarPedidos() {
+            fetch('https://api.netlify.com/api/v1/forms/66f5a99aea4c280008f95347/submissions', {
                 headers: {
-                    Authorization: `Bearer ${NETLIFY_TOKEN}`,
-                    'Content-Type': 'application/json',
-                },
-            });
+                    Authorization: 'Bearer YOUR_ACCESS_TOKEN' // Substitua pelo seu token de acesso
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const tabela = document.getElementById("pedidoTable").querySelector("tbody");
+                tabela.innerHTML = "";
 
-            if (!response.ok) {
-                throw new Error(`Erro ao buscar pedidos: ${response.statusText}`);
-            }
+                data.forEach(pedido => {
+                    const novaLinha = tabela.insertRow();
+                    const { item, quantidade, parceiro, status, dataEntrada, dataLiberacao } = pedido.data; // Ajuste conforme a estrutura do objeto
 
-            const dados = await response.json();
-            return dados;
+                    novaLinha.innerHTML = `
+                        <td>${pedido.id}</td> <!-- Exibindo o ID do pedido -->
+                        <td>${item}</td>
+                        <td>${quantidade}</td>
+                        <td>${parceiro}</td>
+                        <td>${new Date(dataEntrada).toLocaleString()}</td>
+                        <td>${dataLiberacao ? new Date(dataLiberacao).toLocaleString() : 'Não Liberado'}</td>
+                    `;
+                });
+            })
+            .catch(error => console.error("Erro ao carregar pedidos:", error));
         }
 
-        function atualizarTabela(pedidos) {
-            const tabela = document.getElementById("pedidoTable").querySelector("tbody");
-            tabela.innerHTML = ""; // Limpa a tabela existente
-
-            pedidos.forEach((pedido, index) => {
-                const novaLinha = tabela.insertRow();
-                novaLinha.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${pedido.data.item}</td>
-                    <td>${pedido.data.quantidade}</td>
-                    <td>${pedido.data.parceiro}</td>
-                    <td>${pedido.data.status}</td>
-                `;
-            });
-        }
-
-        window.onload = async function() {
-            try {
-                const pedidos = await buscarPedidos();
-                atualizarTabela(pedidos);
-            } catch (error) {
-                console.error(error);
-            }
+        // Carrega os pedidos quando a página é carregada
+        window.onload = function() {
+            carregarPedidos();
         };
     </script>
 </body>
 </html>
-
