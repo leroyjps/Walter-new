@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Cabeçalho -->
     <header>
         <nav>
             <div id="title">
@@ -17,15 +16,14 @@
             <ul>
                 <li><a href="index.html">Home</a></li>
                 <li><a href="gerador.html">Gerar Pedido</a></li>
+                <li><a href="visualizador.html">Visualizar Pedidos</a></li>
                 <li><a href="atualizar.html">Atualizar Pedidos</a></li>
-                <li><a href="relatorio.html">Relatório</a></li>
             </ul>
         </nav>
     </header>
 
-    <!-- Conteúdo Principal -->
     <main>
-        <section class="visualizador-section">
+        <section>
             <h1>Visualizar Pedidos</h1>
             <table id="pedidoTable">
                 <thead>
@@ -35,7 +33,6 @@
                         <th>Quantidade</th>
                         <th>Parceiro de Negócio</th>
                         <th>Status</th>
-                        <th>Data de Entrada</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -45,7 +42,6 @@
         </section>
     </main>
 
-    <!-- Rodapé -->
     <footer>
         <div class="footer-logo">
             <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
@@ -54,38 +50,52 @@
     </footer>
 
     <script>
-        const formID = "66f5a99aea4c280008f95347";
-        const token = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5";
+        async function buscarPedidos() {
+            const NETLIFY_TOKEN = 'nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5';
+            const FORM_ID = '66f5a99aea4c280008f95347';
+            const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions`;
 
-        function fetchPedidos() {
-            fetch(`https://api.netlify.com/api/v1/forms/${formID}/submissions`, {
+            const response = await fetch(url, {
+                method: 'GET',
                 headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const tabela = document.getElementById("pedidoTable").querySelector("tbody");
-                tabela.innerHTML = "";
+                    Authorization: `Bearer ${NETLIFY_TOKEN}`,
+                    'Content-Type': 'application/json',
+                },
+            });
 
-                data.forEach((pedido, index) => {
-                    const novaLinha = tabela.insertRow();
-                    novaLinha.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${pedido.data.item}</td>
-                        <td>${pedido.data.quantidade}</td>
-                        <td>${pedido.data.parceiro}</td>
-                        <td>${pedido.data.status || 'Não Liberado'}</td>
-                        <td>${new Date(pedido.created_at).toLocaleString()}</td>
-                    `;
-                });
-            })
-            .catch(error => console.error("Erro ao buscar pedidos:", error));
+            if (!response.ok) {
+                throw new Error(`Erro ao buscar pedidos: ${response.statusText}`);
+            }
+
+            const dados = await response.json();
+            return dados;
         }
 
-        window.onload = function() {
-            fetchPedidos();
+        function atualizarTabela(pedidos) {
+            const tabela = document.getElementById("pedidoTable").querySelector("tbody");
+            tabela.innerHTML = ""; // Limpa a tabela existente
+
+            pedidos.forEach((pedido, index) => {
+                const novaLinha = tabela.insertRow();
+                novaLinha.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${pedido.data.item}</td>
+                    <td>${pedido.data.quantidade}</td>
+                    <td>${pedido.data.parceiro}</td>
+                    <td>${pedido.data.status}</td>
+                `;
+            });
+        }
+
+        window.onload = async function() {
+            try {
+                const pedidos = await buscarPedidos();
+                atualizarTabela(pedidos);
+            } catch (error) {
+                console.error(error);
+            }
         };
     </script>
 </body>
 </html>
+
