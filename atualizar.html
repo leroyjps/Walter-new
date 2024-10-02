@@ -17,7 +17,6 @@
                 <li><a href="index.html">Home</a></li>
                 <li><a href="gerador.html">Gerar Pedido</a></li>
                 <li><a href="visualizador.html">Visualizar Pedidos</a></li>
-                <li><a href="atualizar.html">Atualizar Pedidos</a></li>
             </ul>
         </nav>
     </header>
@@ -53,7 +52,7 @@
             </table>
         </section>
     </main>
-
+    
     <footer>
         <div class="footer-logo">
             <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
@@ -63,7 +62,7 @@
 
     <script>
         const NETLIFY_TOKEN = 'nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5'; // Seu token
-        const FORM_ID = '66f5a8b93e0f76000838d52c'; // ID do formulário
+        const FORM_ID = '66f5a99aea4c280008f95347'; // ID do formulário
 
         async function buscarPedidos() {
             const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions`;
@@ -106,10 +105,10 @@
 
             const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
             if (pedidoId >= 0 && pedidoId < pedidos.length) {
-                pedidos[pedidoId].data.status = status; // Atualiza o status do pedido
+                pedidos[pedidoId].status = status; // Atualiza o status do pedido
                 localStorage.setItem("pedidos", JSON.stringify(pedidos));
                 alert("Status atualizado com sucesso!");
-                atualizarTabela(pedidos); // Atualiza a tabela após a alteração
+                atualizarTabela(); // Atualiza a tabela após a alteração
             } else {
                 alert("ID do pedido inválido!");
             }
