@@ -1,142 +1,101 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Visualizar Pedidos - Walterscheid Powertrain Group</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <!-- Cabeçalho -->
     <header>
-        <nav>
-            <div id="title">
-                <h1>Walterscheid Powertrain Group</h1>
-            </div>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="gerar.html">Gerar Pedidos</a></li>
-                <li><a href="atualizar.html">Atualizar Pedidos</a></li>
-            </ul>
-        </nav>
+      <nav>
+        <div id="title">
+          <h1>Walterscheid Powertrain Group</h1>
+        </div>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="gerador.html">Gerar Pedido</a></li>
+          <li><a href="atualizar.html">Atualizar Pedidos</a></li>
+          <li><a href="relatorio.html">Relatório</a></li>
+        </ul>
+      </nav>
     </header>
 
     <!-- Conteúdo Principal -->
     <main>
-        <section>
-            <h1>Visualizar Pedidos</h1>
-            <table id="pedidoTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Item</th>
-                        <th>Quantidade</th>
-                        <th>Parceiro de Negócio</th>
-                        <th>Data de Entrada</th>
-                        <th>Data de Saída</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Pedidos serão carregados aqui via JavaScript -->
-                </tbody>
-            </table>
-        </section>
+      <section class="visualizador-section">
+        <h1>Visualizar Pedidos</h1>
+        <table id="pedidoTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Item</th>
+              <th>Quantidade</th>
+              <th>Parceiro de Negócio</th>
+              <th>Status</th>
+              <th>Data de Entrada</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Os pedidos serão inseridos aqui via JavaScript -->
+          </tbody>
+        </table>
+      </section>
     </main>
 
     <!-- Rodapé -->
     <footer>
-        <div class="footer-logo">
-            <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
-        </div>
-        <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+      <div class="footer-logo">
+        <img
+          src="components/images/Walterscheid.jpg"
+          alt="Logo Walterscheid"
+          class="logo"
+        />
+      </div>
+      <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
     </footer>
 
-    <!-- Áudio de Notificação -->
-    <audio id="notificacaoAudio" src="audio/alerta.mp3" preload="auto"></audio>
-
     <script>
-        let pedidosAnteriores = [];
+      const formID = "66f5a99aea4c280008f95347";
+      const token = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5";
 
-        function carregarPedidos() {
-            fetch('https://api.netlify.com/api/v1/forms/66f5a99aea4c280008f95347/submissions', {
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const tabela = document.getElementById("pedidoTable").querySelector("tbody");
-                tabela.innerHTML = "";
+      function fetchPedidos() {
+        fetch(`https://api.netlify.com/api/v1/forms/${formID}/submissions`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const tabela = document
+              .getElementById("pedidoTable")
+              .querySelector("tbody");
+            tabela.innerHTML = "";
 
-                data.forEach((pedido, index) => {
-                    const formData = pedido.data; // Dados do formulário
-                    const novaLinha = tabela.insertRow();
-
-                    // Adiciona as informações necessárias
-                    novaLinha.innerHTML = `
-                        <td>${pedido.id}</td>
-                        <td>${formData.item}</td>
-                        <td>${formData.quantidade}</td>
-                        <td>${formData.parceiro}</td>
-                        <td>${new Date(formData.dataEntrada).toLocaleString()}</td>
-                        <td>${formData.dataLiberacao ? new Date(formData.dataLiberacao).toLocaleString() : "Não Liberado"}</td>
-                        <td>${formData.status}</td>
-                        <td>
-                            <button onclick="atualizarStatus('${pedido.id}')">Atualizar Status</button>
-                        </td>
+            data.forEach((pedido, index) => {
+              const novaLinha = tabela.insertRow();
+              novaLinha.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${pedido.data.item}</td>
+                        <td>${pedido.data.quantidade}</td>
+                        <td>${pedido.data.parceiro}</td>
+                        <td>${pedido.data.status || "Não Liberado"}</td>
+                        <td>${new Date(pedido.created_at).toLocaleString()}</td>
                     `;
-                });
+            });
+          })
+          .catch((error) => console.error("Erro ao buscar pedidos:", error));
+      }
 
-                // Verifica se há novos pedidos e toca o áudio de notificação
-                if (pedidosAnteriores.length && data.length > pedidosAnteriores.length) {
-                    tocarNotificacao();
-                }
-
-                // Atualiza a lista de pedidos anteriores
-                pedidosAnteriores = data;
-            })
-            .catch(error => alert("Erro ao carregar os pedidos: " + error));
-        }
-
-        function tocarNotificacao() {
-            const audio = document.getElementById("notificacaoAudio");
-            audio.play().catch(error => console.error("Erro ao tocar o áudio:", error));
-        }
-
-        function atualizarStatus(id) {
-            const novoStatus = prompt("Digite o novo status para o pedido:");
-            if (novoStatus) {
-                fetch(`https://api.netlify.com/api/v1/forms/66f5a99aea4c280008f95347/submissions/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': 'Bearer nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        data: {
-                            status: novoStatus
-                        }
-                    })
-                })
-                .then(() => {
-                    alert("Status atualizado com sucesso!");
-                    carregarPedidos();
-                })
-                .catch(error => alert("Erro ao atualizar o status: " + error));
-            }
-        }
-
-        window.onload = function() {
-            carregarPedidos();
-        };
-
-        // Recarregar os pedidos a cada 1 minuto
-        setInterval(carregarPedidos, 60000);
+      window.onload = function () {
+        fetchPedidos();
+      };
     </script>
-</body>
+  </body>
 </html>
 
