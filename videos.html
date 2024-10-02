@@ -1,61 +1,92 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vídeos - Walterscheid Day</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <header>
-        <nav>
-            <div id="title">
-                <h1>Walterscheid Powertrain Group</h1>
-            </div>
-            <ul>
-                <li><a href="index.html">Início</a></li>
-                <li><a href="sobre-nos.html">Sobre Nós</a></li>
-                <li><a href="expedicao.html">Expedição</a></li>
-                <li><a href="videos.html">Vídeos</a></li>
-                <li><a href="contato.html">Contato</a></li>
-                 <li><a href="aprovações.html">Contato</a></li>
-                <li><a href="Embarques.html">Embarques</a></li>
-                <li><a href="Formulario.html">Manutenção</a></li>
-                <li><a href="oea.html">OEE</a></li>
-                <li><a href="visitantes.html">Visitantes</a></li>
-            </ul>
-        </nav>
+      <nav>
+        <div id="title">
+          <h1>Walterscheid Powertrain Group</h1>
+        </div>
+        <ul>
+          <li><a href="index.html">Início</a></li>
+          <li><a href="sobre-nos.html">Sobre Nós</a></li>
+          <li><a href="expedicao.html">Expedição</a></li>
+          <li><a href="videos.html">Vídeos</a></li>
+          <li><a href="contato.html">Contato</a></li>
+          <li><a href="aprovações.html">Aprovações</a></li>
+          <li><a href="Embarques.html">Embarques</a></li>
+          <li><a href="Formulario.html">Manutenção</a></li>
+          <li><a href="oea.html">OEE</a></li>
+          <li><a href="visitantes.html">Visitantes</a></li>
+        </ul>
+      </nav>
     </header>
 
     <section class="videos-section">
-        <h1>Nossos Vídeos</h1>
-        <p>Confira alguns dos vídeos relacionados ao Walterscheid Day.</p>
+      <h1>Nossos Vídeos</h1>
+      <p>Confira alguns dos vídeos relacionados ao Walterscheid Day.</p>
 
-        <div class="video-grid">
-            <!-- Video 1: Exemplo do YouTube -->
-            <div class="video-container">
-                  <!-- Vídeo do YouTube em loop -->
-                  <iframe class="responsive-iframe" src="https://www.youtube.com/embed/XDHbttbI0BQ?si=I5KfNCZwAzn8M6tN" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
-                gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                <h3>Título do Vídeo 1</h3>
-            </div>
-
-            <!-- Video 2: Outro vídeo do YouTube -->
-            <div class="video-container">
-                <iframe class="responsive-iframe" src="https://www.youtube.com/embed/7eban8J09pk?si=MMq1uLcFODU4FZ4V" 
-                title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; 
-                gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                <h3>Título do Vídeo 2</h3>
-            </div>
+      <div class="video-grid">
+        <!-- Vídeo 1: Exemplo do YouTube -->
+        <div class="video-container">
+          <iframe
+            class="responsive-iframe"
+            src="https://www.youtube.com/embed/XDHbttbI0BQ?si=I5KfNCZwAzn8M6tN"
+            title="YouTube video player"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
+          <h3>Título do Vídeo 1</h3>
         </div>
+
+        <!-- Vídeo 2: Outro vídeo do YouTube -->
+        <div class="video-container">
+          <iframe
+            class="responsive-iframe"
+            src="https://www.youtube.com/embed/7eban8J09pk?si=MMq1uLcFODU4FZ4V"
+            title="YouTube video player"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
+          <h3>Título do Vídeo 2</h3>
+        </div>
+
+        <!-- Vídeo 3: Local MP4 em loop -->
+        <div class="video-container">
+          <video controls loop class="responsive-video">
+            <source
+              src="/components/images/outubro rosa.mp4"
+              type="video/mp4"
+            />
+            Seu navegador não suporta a reprodução deste vídeo.
+          </video>
+          <h3>Título do Vídeo MP4</h3>
+        </div>
+      </div>
     </section>
 
     <footer>
-        <div class="footer-logo">
-            <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
-        </div>
-        <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+      <div class="footer-logo">
+        <img
+          src="components/images/Walterscheid.jpg"
+          alt="Logo Walterscheid"
+          class="logo"
+        />
+      </div>
+      <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
     </footer>
-</body>
+  </body>
 </html>
