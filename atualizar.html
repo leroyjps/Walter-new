@@ -99,18 +99,43 @@
             });
         }
 
-        document.getElementById("atualizarBtn").onclick = function() {
-            const pedidoId = parseInt(document.getElementById("pedidoId").value) - 1; // Ajusta para o índice do array
+        async function atualizarStatusNoNetlify(pedidoId, status) {
+            const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions/${pedidoId}`;
+            const body = JSON.stringify({
+                data: { status: status } // Atualiza o status do pedido
+            });
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    Authorization: `Bearer ${NETLIFY_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: body
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erro ao atualizar status: ${response.statusText}`);
+            }
+
+            alert("Status atualizado com sucesso!");
+        }
+
+        document.getElementById("atualizarBtn").onclick = async function() {
+            const pedidoId = document.getElementById("pedidoId").value.trim();
             const status = document.getElementById("status").value;
 
-            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-            if (pedidoId >= 0 && pedidoId < pedidos.length) {
-                pedidos[pedidoId].status = status; // Atualiza o status do pedido
-                localStorage.setItem("pedidos", JSON.stringify(pedidos));
-                alert("Status atualizado com sucesso!");
-                atualizarTabela(); // Atualiza a tabela após a alteração
-            } else {
-                alert("ID do pedido inválido!");
+            if (!pedidoId) {
+                alert("Por favor, insira o ID do pedido.");
+                return;
+            }
+
+            try {
+                await atualizarStatusNoNetlify(pedidoId, status);
+                const pedidosAtualizados = await buscarPedidos(); // Busca novamente os pedidos para atualizar a tabela
+                atualizarTabela(pedidosAtualizados);
+            } catch (error) {
+                alert("Erro ao atualizar o status: " + error.message);
             }
         };
 
