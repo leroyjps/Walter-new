@@ -32,7 +32,6 @@ header nav ul li a:hover {
 }
 
 /* Estilos adicionais para centralizar o conteúdo */
-
 body {
   margin: 0;
   font-family: "Poppins", sans-serif;
@@ -62,20 +61,23 @@ nav ul {
   gap: 1.5rem;
 }
 
+/* Estilos do contêiner do clima */
 .weather-container {
-  background-color: white;
+  background-color: #ffffff;
   padding: 20px;
+  border: 2px solid #111010;
   border-radius: 10px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
+  margin-top: 20px;
   text-align: center;
-  margin-top: 20px; /* Espaçamento acima do contêiner do clima */
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); /* Efeito de sombra */
+  width: auto; /* Deixa o contêiner se ajustar automaticamente ao conteúdo */
+  max-width: 90%; /* Limita a largura em telas grandes */
 }
 
 .weather-container h1,
 .weather-container h2 {
-  margin-bottom: 1rem; /* Espaço abaixo dos títulos */
-  color: #333; /* Cor dos títulos */
+  margin-bottom: 1rem;
+  color: #333;
 }
 
 .weather-info,
@@ -83,16 +85,26 @@ nav ul {
   margin-top: 15px;
 }
 
+/* Previsão do tempo */
 .forecast-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  display: inline-block;
+  margin: 10px;
+  padding: 10px;
+  background: #f1eeee;
+  border-radius: 5px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Sombra nos blocos de previsão */
 }
 
+/* Ícones do tempo */
 .weather-icon {
-  width: 50px;
-  height: 50px;
+  width: 60px; /* Aumentar o tamanho dos ícones */
+  height: 60px;
+  filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.3)); /* Sombra nos ícones */
+  transition: transform 0.3s ease; /* Efeito de transição */
+}
+
+.weather-icon:hover {
+  transform: scale(1.2); /* Aumentar o tamanho ao passar o mouse */
 }
 
 /* Rodapé */
@@ -112,21 +124,4 @@ footer .logo {
 footer p {
   font-size: 0.8rem;
   text-transform: uppercase;
-}
-.weather-container {
-  text-align: center;
-  padding: 20px;
-  border: 2px solid #111010; /* Borda do retângulo */
-  border-radius: 10px; /* Arredondar os cantos */
-  background-color: #ffffff; /* Cor de fundo do retângulo */
-  max-width: 600px; /* Largura máxima do retângulo */
-  margin: 20px; /* Margem ao redor do retângulo */
-}
-
-.forecast-item {
-  display: inline-block;
-  margin: 10px;
-  padding: 10px;
-  background: #f1eeee; /* Cor de fundo das previsões */
-  border-radius: 5px;
 }
