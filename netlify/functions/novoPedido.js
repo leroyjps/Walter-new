@@ -8,7 +8,6 @@ async function criarNovoPedido(dadosPedido) {
 
   // Dados que devem ser enviados para o formulário
   const formData = {
-    "form-name": "novoPedido", // Nome do formulário, importante para o Netlify identificar
     item: dadosPedido.item,
     quantidade: dadosPedido.quantidade,
     parceiro: dadosPedido.parceiro,
@@ -40,4 +39,6 @@ criarNovoPedido({ item: "Exemplo", quantidade: 5, parceiro: "Fornecedor Y" })
   })
   .catch((error) => {
     console.error("Erro ao criar pedido:", error);
+  });
+
   });
