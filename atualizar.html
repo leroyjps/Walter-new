@@ -1,77 +1,70 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Atualizar Pedidos - Walterscheid Powertrain Group</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
+</head>
+<body>
     <header>
-      <nav>
-        <div id="title">
-          <h1>Walterscheid Powertrain Group</h1>
-        </div>
-        <ul>
-          <li><a href="index.html">Home</a></li>
-          <li><a href="gerador.html">Gerar Pedido</a></li>
-          <li><a href="visualizador.html">Visualizar Pedidos</a></li>
-        </ul>
-      </nav>
+        <nav>
+            <div id="title">
+                <h1>Walterscheid Powertrain Group</h1>
+            </div>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="gerador.html">Gerar Pedido</a></li>
+                <li><a href="visualizador.html">Visualizar Pedidos</a></li>
+            </ul>
+        </nav>
     </header>
 
     <main>
-      <section>
-        <h1>Atualizar Pedidos</h1>
-        <label for="pedidoId">ID do Pedido:</label>
-        <input type="number" id="pedidoId" required />
+        <section>
+            <h1>Atualizar Pedidos</h1>
+            <label for="pedidoId">ID do Pedido:</label>
+            <input type="number" id="pedidoId" required />
 
-        <label for="status">Atualizar Status:</label>
-        <select id="status" required>
-          <option value="Liberado">Liberado</option>
-          <option value="Não Liberado">Não Liberado</option>
-        </select>
+            <label for="status">Atualizar Status:</label>
+            <select id="status" required>
+                <option value="Liberado">Liberado</option>
+                <option value="Não Liberado">Não Liberado</option>
+            </select>
 
-        <button id="atualizarBtn">Atualizar Status</button>
+            <button id="atualizarBtn">Atualizar Status</button>
 
-        <h2>Pedidos Existentes</h2>
-        <table id="pedidoTable">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Item</th>
-              <th>Quantidade</th>
-              <th>Parceiro de Negócio</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Os pedidos serão inseridos aqui via JavaScript -->
-          </tbody>
-        </table>
+            <h2>Pedidos Existentes</h2>
+            <table id="pedidoTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Item</th>
+                        <th>Quantidade</th>
+                        <th>Parceiro de Negócio</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Os pedidos serão inseridos aqui via JavaScript -->
+                </tbody>
+            </table>
 
-        <!-- Controles de paginação -->
-        <div class="pagination">
-          <button id="prev-btn" onclick="previousPage()">Anterior</button>
-          <span id="page-info"></span>
-          <button id="next-btn" onclick="nextPage()">Próxima</button>
-        </div>
-      </section>
+            <!-- Controles de paginação -->
+            <div class="pagination">
+                <button id="prev-btn" onclick="previousPage()">Anterior</button>
+                <span id="page-info"></span>
+                <button id="next-btn" onclick="nextPage()">Próxima</button>
+            </div>
+        </section>
     </main>
 
     <footer>
-      <div class="footer-logo">
-        <img
-          src="components/images/Walterscheid.jpg"
-          alt="Logo Walterscheid"
-          class="logo"
-        />
-      </div>
-      <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+        <div class="footer-logo">
+            <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo" />
+        </div>
+        <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
     </footer>
 
     <script>
@@ -82,7 +75,6 @@
       let currentPage = 1;
       const itemsPerPage = 10;
 
-      // Função para buscar pedidos do Netlify
       async function buscarPedidos() {
         const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions`;
 
@@ -102,7 +94,6 @@
         return dados;
       }
 
-      // Função para atualizar a tabela de pedidos na tela
       function atualizarTabela() {
         const tabela = document
           .getElementById("pedidoTable")
@@ -124,23 +115,48 @@
                 `;
         });
 
-        // Atualiza a informação da página atual
         document.getElementById(
           "page-info"
         ).innerText = `Página ${currentPage} de ${Math.ceil(
           pedidos.length / itemsPerPage
         )}`;
 
-        // Habilita ou desabilita os botões de navegação
         document.getElementById("prev-btn").disabled = currentPage === 1;
         document.getElementById("next-btn").disabled =
           currentPage * itemsPerPage >= pedidos.length;
       }
 
-      // Função para "atualizar" o status de um pedido
-      async function atualizarStatusNoNetlify(pedidoId, status) {
-        // Não é possível editar diretamente via PUT; recomendável usar outra abordagem (deletar e criar)
-        alert(`Não é possível atualizar diretamente o pedido ${pedidoId} no Netlify.`);
+      async function deletarPedido(pedidoId) {
+        const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions/${pedidoId}`;
+        const response = await fetch(url, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${NETLIFY_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erro ao deletar pedido: ${response.statusText}`);
+        }
+      }
+
+      async function criarNovoPedido(novosDados) {
+        const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${NETLIFY_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            data: novosDados,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erro ao criar novo pedido: ${response.statusText}`);
+        }
       }
 
       document.getElementById("atualizarBtn").onclick = async function () {
@@ -152,17 +168,22 @@
           return;
         }
 
+        const novosDados = {
+          status: status,
+          // Adicione outros campos do pedido aqui, se necessário
+        };
+
         try {
-          await atualizarStatusNoNetlify(pedidoId, status);
+          await deletarPedido(pedidoId); // Deleta o pedido original
+          await criarNovoPedido(novosDados); // Cria um novo pedido atualizado
           const pedidosAtualizados = await buscarPedidos(); // Busca novamente os pedidos para atualizar a tabela
           pedidos = pedidosAtualizados;
           atualizarTabela();
         } catch (error) {
-          alert("Erro ao atualizar o status: " + error.message);
+          alert("Erro ao atualizar o pedido: " + error.message);
         }
       };
 
-      // Função para avançar para a próxima página
       function nextPage() {
         if (currentPage * itemsPerPage < pedidos.length) {
           currentPage++;
@@ -170,7 +191,6 @@
         }
       }
 
-      // Função para voltar para a página anterior
       function previousPage() {
         if (currentPage > 1) {
           currentPage--;
@@ -178,7 +198,6 @@
         }
       }
 
-      // Carrega os pedidos ao iniciar a página
       window.onload = async function () {
         try {
           pedidos = await buscarPedidos();
@@ -188,6 +207,5 @@
         }
       };
     </script>
-  </body>
+</body>
 </html>
-
