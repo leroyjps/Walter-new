@@ -9,12 +9,14 @@
   async function buscarPedidos() {
     const url = `https://api.netlify.com/api/v1/forms/${FORM_ID_BUSCAR}/submissions`;
 
+    // Usando POST porque a API do Netlify Forms espera um POST para buscar dados
     const response = await fetch(url, {
-      method: "GET",
+      method: "POST",
       headers: {
         Authorization: `Bearer ${NETLIFY_TOKEN}`,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({}) // Envia um corpo vazio para listar todas as submissões
     });
 
     if (!response.ok) {
@@ -38,7 +40,7 @@
     pedidosToDisplay.forEach((pedido, index) => {
       const novaLinha = tabela.insertRow();
       novaLinha.innerHTML = `
-                <td>${index + 1}</td>
+                <td>${start + index + 1}</td>
                 <td>${pedido.data.item}</td>
                 <td>${pedido.data.quantidade}</td>
                 <td>${pedido.data.parceiro}</td>
@@ -80,3 +82,4 @@
     }
   };
 </script>
+
