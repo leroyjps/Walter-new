@@ -52,6 +52,13 @@
           <span id="page-info"></span>
           <button id="next-btn" onclick="nextPage()">Próxima</button>
         </div>
+
+        <!-- Formulário para Buscar Pedido -->
+        <form id="buscarPedidoForm">
+          <label for="pedidoIdBuscar">ID do Pedido:</label>
+          <input type="number" id="pedidoIdBuscar" name="pedidoIdBuscar" required />
+          <button type="button" onclick="buscarPedido()">Buscar Pedido</button>
+        </form>
       </section>
     </main>
 
@@ -68,14 +75,14 @@
     </footer>
 
     <script>
-      const formID = "66f5a99aea4c280008f95347";
+      const formID = "66f5a99aea4c280008f95347"; // ID do formulário Netlify de visualização
       const token = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5";
 
       let pedidos = [];
       let currentPage = 1;
       const itemsPerPage = 10;
 
-      // Função para buscar os pedidos
+      // Função para buscar todos os pedidos
       function fetchPedidos() {
         fetch(`https://api.netlify.com/api/v1/forms/${formID}/submissions`, {
           headers: {
@@ -138,19 +145,48 @@
         }
       }
 
-      // Chamada inicial para buscar e renderizar os pedidos
+      // Função para buscar um pedido específico pelo ID
+      function buscarPedido() {
+        const pedidoIdBuscar = document.getElementById("pedidoIdBuscar").value;
+        
+        if (!pedidoIdBuscar) {
+          alert("Por favor, insira o ID do pedido.");
+          return;
+        }
+
+        const pedido = pedidos.find(pedido => pedido.data.id === parseInt(pedidoIdBuscar));
+
+        if (pedido) {
+          // Notificar usuário com áudio
+          const audio = new Audio("notification.mp3"); // Certifique-se de ter o arquivo notification.mp3
+          audio.play();
+
+          // Renderizar o pedido encontrado
+          const tabela = document.getElementById("pedidoTable").querySelector("tbody");
+          tabela.innerHTML = `
+            <tr>
+              <td>${pedido.data.id}</td>
+              <td>${pedido.data.item}</td>
+              <td>${pedido.data.quantidade}</td>
+              <td>${pedido.data.parceiro}</td>
+              <td>${pedido.data.status || "Não Liberado"}</td>
+              <td>${new Date(pedido.created_at).toLocaleString()}</td>
+            </tr>
+          `;
+
+          alert("Pedido encontrado!");
+        } else {
+          alert("Pedido não encontrado.");
+        }
+      }
+
+      // Chamada inicial para buscar e renderizar todos os pedidos
       window.onload = function () {
         fetchPedidos();
       };
     </script>
-    <form name="buscarPedido" method="POST" data-netlify="true">
-  <input type="hidden" name="form-name" value="buscarPedido" />
-
-  <label for="pedidoIdBuscar">ID do Pedido:</label>
-  <input type="number" id="pedidoIdBuscar" name="pedidoIdBuscar" required />
-
-  <button type="submit">Buscar Pedido</button>
-</form>
+  </body>
+</html>
 
   </body>
 </html>
