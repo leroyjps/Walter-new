@@ -50,6 +50,13 @@
                     <!-- Os pedidos serão inseridos aqui via JavaScript -->
                 </tbody>
             </table>
+
+            <!-- Controles de paginação -->
+            <div class="pagination">
+                <button id="prev-btn" onclick="previousPage()">Anterior</button>
+                <span id="page-info"></span>
+                <button id="next-btn" onclick="nextPage()">Próxima</button>
+            </div>
         </section>
     </main>
     
@@ -63,6 +70,10 @@
     <script>
         const NETLIFY_TOKEN = 'nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5'; // Seu token
         const FORM_ID = '66f5a99aea4c280008f95347'; // ID do formulário
+
+        let pedidos = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
 
         async function buscarPedidos() {
             const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions`;
@@ -83,11 +94,15 @@
             return dados;
         }
 
-        function atualizarTabela(pedidos) {
+        function atualizarTabela() {
             const tabela = document.getElementById("pedidoTable").querySelector("tbody");
             tabela.innerHTML = ""; // Limpa a tabela existente
 
-            pedidos.forEach((pedido, index) => {
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pedidosToDisplay = pedidos.slice(start, end);  // Pega os pedidos da página atual
+
+            pedidosToDisplay.forEach((pedido, index) => {
                 const novaLinha = tabela.insertRow();
                 novaLinha.innerHTML = `
                     <td>${index + 1}</td>
@@ -97,28 +112,77 @@
                     <td>${pedido.data.status}</td>
                 `;
             });
+
+            // Atualiza a informação da página atual
+            document.getElementById('page-info').innerText = `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
+
+            // Habilita ou desabilita os botões de navegação
+            document.getElementById('prev-btn').disabled = currentPage === 1;
+            document.getElementById('next-btn').disabled = currentPage * itemsPerPage >= pedidos.length;
         }
 
-        document.getElementById("atualizarBtn").onclick = function() {
-            const pedidoId = parseInt(document.getElementById("pedidoId").value) - 1; // Ajusta para o índice do array
+        async function atualizarStatusNoNetlify(pedidoId, status) {
+            const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions/${pedidoId}`;
+            const body = JSON.stringify({
+                data: { status: status } // Atualiza o status do pedido
+            });
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    Authorization: `Bearer ${NETLIFY_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: body
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erro ao atualizar status: ${response.statusText}`);
+            }
+
+            alert("Status atualizado com sucesso!");
+        }
+
+        document.getElementById("atualizarBtn").onclick = async function() {
+            const pedidoId = document.getElementById("pedidoId").value.trim();
             const status = document.getElementById("status").value;
 
-            const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-            if (pedidoId >= 0 && pedidoId < pedidos.length) {
-                pedidos[pedidoId].status = status; // Atualiza o status do pedido
-                localStorage.setItem("pedidos", JSON.stringify(pedidos));
-                alert("Status atualizado com sucesso!");
-                atualizarTabela(); // Atualiza a tabela após a alteração
-            } else {
-                alert("ID do pedido inválido!");
+            if (!pedidoId) {
+                alert("Por favor, insira o ID do pedido.");
+                return;
+            }
+
+            try {
+                await atualizarStatusNoNetlify(pedidoId, status);
+                const pedidosAtualizados = await buscarPedidos(); // Busca novamente os pedidos para atualizar a tabela
+                pedidos = pedidosAtualizados;
+                atualizarTabela();
+            } catch (error) {
+                alert("Erro ao atualizar o status: " + error.message);
             }
         };
+
+        // Função para avançar para a próxima página
+        function nextPage() {
+            if (currentPage * itemsPerPage < pedidos.length) {
+                currentPage++;
+                atualizarTabela();
+            }
+        }
+
+        // Função para voltar para a página anterior
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                atualizarTabela();
+            }
+        }
 
         // Carrega os pedidos ao iniciar a página
         window.onload = async function() {
             try {
-                const pedidos = await buscarPedidos();
-                atualizarTabela(pedidos);
+                pedidos = await buscarPedidos();
+                atualizarTabela();
             } catch (error) {
                 console.error(error);
             }
