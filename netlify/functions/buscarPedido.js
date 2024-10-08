@@ -1,4 +1,4 @@
-<script>
+
   const NETLIFY_TOKEN = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5"; // Seu token
   const FORM_ID_BUSCAR = "67057b4d13061000082d922c"; // ID do formulário de busca
 
@@ -81,5 +81,5 @@
       console.error(error);
     }
   };
-</script>
+
 
