@@ -143,6 +143,15 @@
         fetchPedidos();
       };
     </script>
+    <form name="buscarPedido" method="POST" data-netlify="true">
+  <input type="hidden" name="form-name" value="buscarPedido" />
+
+  <label for="pedidoIdBuscar">ID do Pedido:</label>
+  <input type="number" id="pedidoIdBuscar" name="pedidoIdBuscar" required />
+
+  <button type="submit">Buscar Pedido</button>
+</form>
+
   </body>
 </html>
 
