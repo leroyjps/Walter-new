@@ -229,6 +229,18 @@
     }
   };
 </script>
-
+<form name="atualizar-pedido" method="POST" data-netlify="true">
+  <input type="hidden" name="form-name" value="atualizar-pedido" />
+  <label for="pedidoId">ID do Pedido:</label>
+  <input type="number" id="pedidoId" name="pedidoId" required />
+  
+  <label for="status">Status:</label>
+  <select id="status" name="status" required>
+    <option value="Liberado">Liberado</option>
+    <option value="Não Liberado">Não Liberado</option>
+  </select>
+  
+  <button type="submit">Atualizar Pedido</button>
+</form>
 </body>
 </html>
