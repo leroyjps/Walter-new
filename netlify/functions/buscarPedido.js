@@ -1,7 +1,7 @@
 const fetch = require("node-fetch");
 
 const NETLIFY_TOKEN = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5"; // Seu token
-const FORM_ID = "66fac53f27d3ee00088634c6"; // ID do formulário de pedidos
+const FORM_ID = "670571cd7cd4e90008d77590"; // ID do formulário de pedidos
 
 async function buscarPedidos() {
   const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions`;
