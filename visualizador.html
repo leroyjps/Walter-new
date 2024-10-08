@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- Cabeçalho -->
     <header>
       <nav>
         <div id="title">
@@ -26,7 +25,6 @@
       </nav>
     </header>
 
-    <!-- Conteúdo Principal -->
     <main>
       <section class="visualizador-section">
         <h1>Visualizar Pedidos</h1>
@@ -52,17 +50,9 @@
           <span id="page-info"></span>
           <button id="next-btn" onclick="nextPage()">Próxima</button>
         </div>
-
-        <!-- Formulário para Buscar Pedido -->
-        <form id="buscarPedidoForm">
-          <label for="pedidoIdBuscar">ID do Pedido:</label>
-          <input type="number" id="pedidoIdBuscar" name="pedidoIdBuscar" required />
-          <button type="button" onclick="buscarPedido()">Buscar Pedido</button>
-        </form>
       </section>
     </main>
 
-    <!-- Rodapé -->
     <footer>
       <div class="footer-logo">
         <img
@@ -75,14 +65,14 @@
     </footer>
 
     <script>
-      const formID = "66f5a99aea4c280008f95347"; // ID do formulário Netlify de visualização
-      const token = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5";
+      const formID = "66f5a99aea4c280008f95347"; // ID do formulário de pedidos
+      const token = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5"; // Token de acesso
 
       let pedidos = [];
       let currentPage = 1;
       const itemsPerPage = 10;
 
-      // Função para buscar todos os pedidos
+      // Função para buscar os pedidos
       function fetchPedidos() {
         fetch(`https://api.netlify.com/api/v1/forms/${formID}/submissions`, {
           headers: {
@@ -91,7 +81,7 @@
         })
           .then((response) => response.json())
           .then((data) => {
-            pedidos = data;  // Guardar os pedidos recebidos
+            pedidos = data;
             renderPedidos();
           })
           .catch((error) => console.error("Erro ao buscar pedidos:", error));
@@ -99,15 +89,12 @@
 
       // Função para renderizar pedidos com paginação
       function renderPedidos() {
-        const tabela = document
-          .getElementById("pedidoTable")
-          .querySelector("tbody");
-
+        const tabela = document.getElementById("pedidoTable").querySelector("tbody");
         tabela.innerHTML = ""; // Limpa a tabela
 
         const start = (currentPage - 1) * itemsPerPage;
         const end = start + itemsPerPage;
-        const pedidosToDisplay = pedidos.slice(start, end); // Pega os pedidos da página atual
+        const pedidosToDisplay = pedidos.slice(start, end);
 
         pedidosToDisplay.forEach((pedido, index) => {
           const novaLinha = tabela.insertRow();
@@ -145,49 +132,10 @@
         }
       }
 
-      // Função para buscar um pedido específico pelo ID
-      function buscarPedido() {
-        const pedidoIdBuscar = document.getElementById("pedidoIdBuscar").value;
-        
-        if (!pedidoIdBuscar) {
-          alert("Por favor, insira o ID do pedido.");
-          return;
-        }
-
-        const pedido = pedidos.find(pedido => pedido.data.id === parseInt(pedidoIdBuscar));
-
-        if (pedido) {
-          // Notificar usuário com áudio
-          const audio = new Audio("notification.mp3"); // Certifique-se de ter o arquivo notification.mp3
-          audio.play();
-
-          // Renderizar o pedido encontrado
-          const tabela = document.getElementById("pedidoTable").querySelector("tbody");
-          tabela.innerHTML = `
-            <tr>
-              <td>${pedido.data.id}</td>
-              <td>${pedido.data.item}</td>
-              <td>${pedido.data.quantidade}</td>
-              <td>${pedido.data.parceiro}</td>
-              <td>${pedido.data.status || "Não Liberado"}</td>
-              <td>${new Date(pedido.created_at).toLocaleString()}</td>
-            </tr>
-          `;
-
-          alert("Pedido encontrado!");
-        } else {
-          alert("Pedido não encontrado.");
-        }
-      }
-
-      // Chamada inicial para buscar e renderizar todos os pedidos
+      // Chamada inicial para buscar e renderizar os pedidos
       window.onload = function () {
         fetchPedidos();
       };
     </script>
   </body>
 </html>
-
-  </body>
-</html>
-
