@@ -30,4 +30,4 @@ buscarPedidos()
     .catch(error => {
         console.error(error);
     });
-\\
+//
