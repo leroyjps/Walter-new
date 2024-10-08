@@ -30,6 +30,13 @@
             <div id="relatorioContainer">
                 <!-- Aqui será exibido um relatório visual baseado nos dados -->
             </div>
+
+            <!-- Controles de paginação -->
+            <div class="pagination">
+                <button id="prev-btn" onclick="previousPage()">Anterior</button>
+                <span id="page-info"></span>
+                <button id="next-btn" onclick="nextPage()">Próxima</button>
+            </div>
         </section>
     </main>
 
@@ -45,6 +52,10 @@
         const formID = "66f5a99aea4c280008f95347";
         const token = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5";
 
+        let pedidos = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
         function fetchRelatorio() {
             fetch(`https://api.netlify.com/api/v1/forms/${formID}/submissions`, {
                 headers: {
@@ -53,12 +64,59 @@
             })
             .then(response => response.json())
             .then(data => {
-                const relatorioContainer = document.getElementById("relatorioContainer");
-                // Adicionar lógica de relatório gráfico ou visual com base nos dados recebidos
+                pedidos = data;
+                renderRelatorio();
             })
             .catch(error => console.error("Erro ao buscar o relatório:", error));
         }
 
+        function renderRelatorio() {
+            const relatorioContainer = document.getElementById("relatorioContainer");
+            relatorioContainer.innerHTML = ""; // Limpa o relatório atual
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pedidosToDisplay = pedidos.slice(start, end);  // Pega os pedidos da página atual
+
+            pedidosToDisplay.forEach(pedido => {
+                const pedidoDiv = document.createElement("div");
+                pedidoDiv.classList.add("pedido");
+                pedidoDiv.innerHTML = `
+                    <p><strong>ID:</strong> ${pedido.data.id}</p>
+                    <p><strong>Item:</strong> ${pedido.data.item}</p>
+                    <p><strong>Quantidade:</strong> ${pedido.data.quantidade}</p>
+                    <p><strong>Parceiro de Negócio:</strong> ${pedido.data.parceiro}</p>
+                    <p><strong>Status:</strong> ${pedido.data.status || "Não Liberado"}</p>
+                    <p><strong>Data de Entrada:</strong> ${new Date(pedido.created_at).toLocaleString()}</p>
+                `;
+                relatorioContainer.appendChild(pedidoDiv);
+            });
+
+            // Atualiza a informação da página atual
+            document.getElementById('page-info').innerText = `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
+
+            // Habilita ou desabilita os botões de navegação
+            document.getElementById('prev-btn').disabled = currentPage === 1;
+            document.getElementById('next-btn').disabled = currentPage * itemsPerPage >= pedidos.length;
+        }
+
+        // Função para avançar para a próxima página
+        function nextPage() {
+            if (currentPage * itemsPerPage < pedidos.length) {
+                currentPage++;
+                renderRelatorio();
+            }
+        }
+
+        // Função para voltar para a página anterior
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderRelatorio();
+            }
+        }
+
+        // Chamada inicial para buscar e renderizar o relatório
         window.onload = function() {
             fetchRelatorio();
         };
