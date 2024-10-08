@@ -1,3 +1,4 @@
+/* Cabeçalho */
 header {
   background-color: #1a1a1a;
   padding: 1rem;
@@ -429,6 +430,38 @@ nav ul li a {
   border-radius: 5px; /* Cantos arredondados */
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra */
 }
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination button {
+  padding: 10px 20px;
+  margin: 0 5px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.pagination button:hover {
+  background-color: #0056b3;
+}
+
+.pagination button:disabled {
+  background-color: #d1d1d1;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  margin: 0 10px;
+  font-size: 1rem;
+  font-weight: bold;
+}
 
 /* Estilo da tabela */
 table {
@@ -452,6 +485,59 @@ table tbody tr:hover {
   background-color: #e61e1e; /* Cor de destaque ao passar o mouse */
 }
 
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination button {
+  padding: 10px 20px;
+  margin: 0 5px;
+  background-color: #007bff;
+  color: rgb(10, 4, 4);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.pagination button:hover {
+  background-color: #0056b3;
+}
+
+.pagination button:disabled {
+  background-color: #d1d1d1;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  margin: 0 10px;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+#relatorioContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-around;
+}
+
+.pedido {
+  border: 1px solid #a31919;
+  padding: 15px;
+  border-radius: 5px;
+  width: 250px;
+  background-color: #050404;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pedido p {
+  margin: 5px 0;
+}
+
 /* Estilo do rodapé */
 footer {
   text-align: center;
@@ -462,53 +548,4 @@ footer {
 
 footer img {
   max-width: 100px; /* Limitar o tamanho da imagem do logo */
-}
-/* Reset básico */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: "Poppins", sans-serif;
-  line-height: 1.6;
-  background-color: #080808; /* Fundo preto */
-  color: #fff; /* Cor do texto */
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-/* Cabeçalho */
-header {
-  background: #1a1a1a;
-  padding: 1rem;
-  text-align: center;
-}
-
-header nav {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-header nav ul {
-  list-style: none;
-  display: flex;
-  gap: 1.5rem;
-}
-
-header nav ul li a {
-  color: #00ffff;
-  text-decoration: none;
-  font-weight: bold;
-  padding: 0.5rem 1rem;
-  transition: background-color 0.3s ease;
-}
-
-header nav ul li a:hover {
-  background-color: #00ffff;
-  color: #000;
-  border-radius: 25px;
 }
