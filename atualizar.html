@@ -67,16 +67,16 @@
         <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
     </footer>
 
-   <script>
+  <script>
   const NETLIFY_TOKEN = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5"; // Seu token
-  const FORM_ID = "66f5a99aea4c280008f95347"; // ID do formulário
+  const FORM_ID_ATUALIZAR = "67057a37c472f10008a8db07"; // ID do formulário de atualização
 
   let pedidos = [];
   let currentPage = 1;
   const itemsPerPage = 10;
 
   async function buscarPedidos() {
-    const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions`;
+    const url = `https://api.netlify.com/api/v1/forms/${FORM_ID_ATUALIZAR}/submissions`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -116,21 +116,15 @@
     });
 
     // Atualiza a informação da página atual
-    document.getElementById(
-      "page-info"
-    ).innerText = `Página ${currentPage} de ${Math.ceil(
-      pedidos.length / itemsPerPage
-    )}`;
+    document.getElementById("page-info").innerText = `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
 
     // Habilita ou desabilita os botões de navegação
     document.getElementById("prev-btn").disabled = currentPage === 1;
-    document.getElementById("next-btn").disabled =
-      currentPage * itemsPerPage >= pedidos.length;
+    document.getElementById("next-btn").disabled = currentPage * itemsPerPage >= pedidos.length;
   }
 
-  // Atualiza o status de um pedido
   async function atualizarStatusNoNetlify(pedidoId, status) {
-    const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions/${pedidoId}`;
+    const url = `https://api.netlify.com/api/v1/forms/${FORM_ID_ATUALIZAR}/submissions/${pedidoId}`;
     const body = JSON.stringify({
       data: { status: status }, // Atualiza o status do pedido
     });
@@ -151,25 +145,6 @@
     alert("Status atualizado com sucesso!");
   }
 
-  // Deleta um pedido com base no ID
-  async function deletarPedido(pedidoId) {
-    const url = `https://api.netlify.com/api/v1/forms/${FORM_ID}/submissions/${pedidoId}`;
-    const response = await fetch(url, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${NETLIFY_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Erro ao deletar pedido: ${response.statusText}`);
-    }
-
-    alert("Pedido deletado com sucesso!");
-  }
-
-  // Função ao clicar no botão de atualizar status
   document.getElementById("atualizarBtn").onclick = async function () {
     const pedidoId = document.getElementById("pedidoId").value.trim();
     const status = document.getElementById("status").value;
@@ -180,26 +155,12 @@
     }
 
     try {
-      // Encontre o pedido correspondente com base no pedidoIdInput
-      const pedidoCorrespondente = pedidos.find(
-        (pedido) => pedido.data.pedidoId === pedidoId
-      );
-
-      if (!pedidoCorrespondente) {
-        alert("Pedido não encontrado.");
-        return;
-      }
-
-      const netlifyId = pedidoCorrespondente.id; // UUID do pedido no Netlify
-
-      await deletarPedido(netlifyId); // Deleta o pedido original
-      await atualizarStatusNoNetlify(netlifyId, status); // Atualiza o pedido
-
-      const pedidosAtualizados = await buscarPedidos(); // Atualiza os pedidos na tabela
+      await atualizarStatusNoNetlify(pedidoId, status);
+      const pedidosAtualizados = await buscarPedidos(); // Busca novamente os pedidos para atualizar a tabela
       pedidos = pedidosAtualizados;
       atualizarTabela();
     } catch (error) {
-      alert("Erro ao atualizar o pedido: " + error.message);
+      alert("Erro ao atualizar o status: " + error.message);
     }
   };
 
@@ -229,18 +190,6 @@
     }
   };
 </script>
-<form name="atualizar-pedido" method="POST" data-netlify="true">
-  <input type="hidden" name="form-name" value="atualizar-pedido" />
-  <label for="pedidoId">ID do Pedido:</label>
-  <input type="number" id="pedidoId" name="pedidoId" required />
-  
-  <label for="status">Status:</label>
-  <select id="status" name="status" required>
-    <option value="Liberado">Liberado</option>
-    <option value="Não Liberado">Não Liberado</option>
-  </select>
-  
-  <button type="submit">Atualizar Pedido</button>
-</form>
+
 </body>
 </html>
