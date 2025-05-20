@@ -24,6 +24,7 @@
   <main>
     <section>
       <h1>Atualizar Pedidos</h1>
+
       <label for="pedidoId">ID do Pedido na Tabela:</label>
       <input type="number" id="pedidoId" required />
 
@@ -32,6 +33,9 @@
         <option value="Liberado">Liberado</option>
         <option value="Não Liberado">Não Liberado</option>
       </select>
+
+      <label for="operador">Nome do Operador:</label>
+      <input type="text" id="operador" required />
 
       <button id="atualizarBtn">Atualizar Status</button>
 
@@ -44,10 +48,11 @@
             <th>Quantidade</th>
             <th>Parceiro de Negócio</th>
             <th>Status</th>
+            <th>Operador</th>
           </tr>
         </thead>
         <tbody>
-          <!-- Conteúdo carregado por JavaScript -->
+          <!-- Os pedidos serão inseridos aqui via JavaScript -->
         </tbody>
       </table>
 
@@ -66,10 +71,15 @@
     <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
   </footer>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      updateDoc,
+      doc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
@@ -112,6 +122,7 @@
           <td>${pedido.quantidade}</td>
           <td>${pedido.parceiro}</td>
           <td>${pedido.status}</td>
+          <td>${pedido.operador || "-"}</td>
         `;
       });
 
@@ -125,6 +136,12 @@
     document.getElementById("atualizarBtn").onclick = async function () {
       const idTabela = parseInt(document.getElementById("pedidoId").value.trim());
       const novoStatus = document.getElementById("status").value;
+      const nomeOperador = document.getElementById("operador").value.trim();
+
+      if (!nomeOperador) {
+        alert("Por favor, insira o nome do operador.");
+        return;
+      }
 
       if (isNaN(idTabela) || idTabela <= 0) {
         alert("Informe um número de ID válido da tabela.");
@@ -140,9 +157,13 @@
 
       try {
         const pedidoDoc = doc(db, "pedidos", pedidos[indexPedido].id);
-        await updateDoc(pedidoDoc, { status: novoStatus });
+        await updateDoc(pedidoDoc, {
+          status: novoStatus,
+          operador: nomeOperador
+        });
+
         alert("Status atualizado com sucesso!");
-        buscarPedidos(); // Atualiza a tabela
+        buscarPedidos();
       } catch (error) {
         console.error(error);
         alert("Erro ao atualizar o status.");
