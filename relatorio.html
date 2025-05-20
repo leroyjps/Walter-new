@@ -1,126 +1,185 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Pedidos - Walterscheid Powertrain Group</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Relatório de Pedidos - Walterscheid Powertrain Group</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <!-- Cabeçalho -->
-    <header>
-        <nav>
-            <div id="title">
-                <h1>Walterscheid Powertrain Group</h1>
-            </div>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="gerador.html">Gerar Pedido</a></li>
-                <li><a href="visualizador.html">Visualizar Pedidos</a></li>
-                <li><a href="atualizar.html">Atualizar Pedidos</a></li>
-            </ul>
-        </nav>
-    </header>
+  <header>
+    <nav>
+      <div id="title">
+        <h1>Walterscheid Powertrain Group</h1>
+      </div>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="gerador.html">Gerar Pedido</a></li>
+        <li><a href="visualizador.html">Visualizar Pedidos</a></li>
+        <li><a href="atualizar.html">Atualizar Pedidos</a></li>
+      </ul>
+    </nav>
+  </header>
 
-    <!-- Conteúdo Principal -->
-    <main>
-        <section>
-            <h1>Relatório de Pedidos</h1>
-            <div id="relatorioContainer">
-                <!-- Aqui será exibido um relatório visual baseado nos dados -->
-            </div>
+  <main>
+    <section>
+      <h1>Relatório de Pedidos</h1>
 
-            <!-- Controles de paginação -->
-            <div class="pagination">
-                <button id="prev-btn" onclick="previousPage()">Anterior</button>
-                <span id="page-info"></span>
-                <button id="next-btn" onclick="nextPage()">Próxima</button>
-            </div>
-        </section>
-    </main>
+      <div class="filtros">
+        <input type="text" id="filtroItem" placeholder="Item" />
+        <input type="text" id="filtroParceiro" placeholder="Parceiro" />
+        <select id="filtroStatus">
+          <option value="">Todos os status</option>
+          <option value="Liberado">Liberado</option>
+          <option value="Não Liberado">Não Liberado</option>
+        </select>
+        <input type="date" id="dataInicio" />
+        <input type="date" id="dataFim" />
+        <button onclick="aplicarFiltros()">Filtrar</button>
+        <button onclick="exportarExcel()">Exportar Excel</button>
+      </div>
 
-    <!-- Rodapé -->
-    <footer>
-        <div class="footer-logo">
-            <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
-        </div>
-        <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
-    </footer>
+      <div id="relatorioContainer"></div>
 
-    <script>
-        const formID = "66f5a99aea4c280008f95347";
-        const token = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5";
+      <div class="pagination">
+        <button id="prev-btn" onclick="previousPage()">Anterior</button>
+        <span id="page-info"></span>
+        <button id="next-btn" onclick="nextPage()">Próxima</button>
+      </div>
+    </section>
+  </main>
 
-        let pedidos = [];
-        let currentPage = 1;
-        const itemsPerPage = 10;
+  <footer>
+    <div class="footer-logo">
+      <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo" />
+    </div>
+    <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+  </footer>
 
-        function fetchRelatorio() {
-            fetch(`https://api.netlify.com/api/v1/forms/${formID}/submissions`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                pedidos = data;
-                renderRelatorio();
-            })
-            .catch(error => console.error("Erro ao buscar o relatório:", error));
-        }
+  <!-- SheetJS para exportar Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-        function renderRelatorio() {
-            const relatorioContainer = document.getElementById("relatorioContainer");
-            relatorioContainer.innerHTML = ""; // Limpa o relatório atual
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-            const start = (currentPage - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            const pedidosToDisplay = pedidos.slice(start, end);  // Pega os pedidos da página atual
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.firebasestorage.app",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+      measurementId: "G-9PL8JP0SD4"
+    };
 
-            pedidosToDisplay.forEach(pedido => {
-                const pedidoDiv = document.createElement("div");
-                pedidoDiv.classList.add("pedido");
-                pedidoDiv.innerHTML = `
-                    <p><strong>ID:</strong> ${pedido.data.id}</p>
-                    <p><strong>Item:</strong> ${pedido.data.item}</p>
-                    <p><strong>Quantidade:</strong> ${pedido.data.quantidade}</p>
-                    <p><strong>Parceiro de Negócio:</strong> ${pedido.data.parceiro}</p>
-                    <p><strong>Status:</strong> ${pedido.data.status || "Não Liberado"}</p>
-                    <p><strong>Data de Entrada:</strong> ${new Date(pedido.created_at).toLocaleString()}</p>
-                `;
-                relatorioContainer.appendChild(pedidoDiv);
-            });
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-            // Atualiza a informação da página atual
-            document.getElementById('page-info').innerText = `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
+    let pedidos = [];
+    let pedidosFiltrados = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
-            // Habilita ou desabilita os botões de navegação
-            document.getElementById('prev-btn').disabled = currentPage === 1;
-            document.getElementById('next-btn').disabled = currentPage * itemsPerPage >= pedidos.length;
-        }
+    async function fetchPedidos() {
+      const querySnapshot = await getDocs(collection(db, "pedidos"));
+      pedidos = [];
+      querySnapshot.forEach((doc) => {
+        pedidos.push({ id: doc.id, ...doc.data() });
+      });
+      aplicarFiltros();
+    }
 
-        // Função para avançar para a próxima página
-        function nextPage() {
-            if (currentPage * itemsPerPage < pedidos.length) {
-                currentPage++;
-                renderRelatorio();
-            }
-        }
+    function aplicarFiltros() {
+      const item = document.getElementById("filtroItem").value.toLowerCase();
+      const parceiro = document.getElementById("filtroParceiro").value.toLowerCase();
+      const status = document.getElementById("filtroStatus").value;
+      const dataInicio = document.getElementById("dataInicio").value;
+      const dataFim = document.getElementById("dataFim").value;
 
-        // Função para voltar para a página anterior
-        function previousPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                renderRelatorio();
-            }
-        }
+      pedidosFiltrados = pedidos.filter(p => {
+        const data = new Date(p.dataEntrada);
+        const dentroData =
+          (!dataInicio || data >= new Date(dataInicio)) &&
+          (!dataFim || data <= new Date(dataFim + "T23:59:59"));
 
-        // Chamada inicial para buscar e renderizar o relatório
-        window.onload = function() {
-            fetchRelatorio();
-        };
-    </script>
+        return (
+          (!item || p.item.toLowerCase().includes(item)) &&
+          (!parceiro || p.parceiro.toLowerCase().includes(parceiro)) &&
+          (!status || p.status === status) &&
+          dentroData
+        );
+      });
+
+      currentPage = 1;
+      renderRelatorio();
+    }
+
+    function renderRelatorio() {
+      const container = document.getElementById("relatorioContainer");
+      container.innerHTML = "";
+
+      const start = (currentPage - 1) * itemsPerPage;
+      const pagePedidos = pedidosFiltrados.slice(start, start + itemsPerPage);
+
+      pagePedidos.forEach(p => {
+        const div = document.createElement("div");
+        div.classList.add("pedido");
+        div.innerHTML = `
+          <p><strong>Item:</strong> ${p.item}</p>
+          <p><strong>Quantidade:</strong> ${p.quantidade}</p>
+          <p><strong>Parceiro:</strong> ${p.parceiro}</p>
+          <p><strong>Status:</strong> ${p.status}</p>
+          <p><strong>Data de Entrada:</strong> ${new Date(p.dataEntrada).toLocaleString()}</p>
+          <hr />
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById("page-info").innerText =
+        `Página ${currentPage} de ${Math.ceil(pedidosFiltrados.length / itemsPerPage)}`;
+      document.getElementById("prev-btn").disabled = currentPage === 1;
+      document.getElementById("next-btn").disabled =
+        start + itemsPerPage >= pedidosFiltrados.length;
+    }
+
+    function previousPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderRelatorio();
+      }
+    }
+
+    function nextPage() {
+      if (currentPage * itemsPerPage < pedidosFiltrados.length) {
+        currentPage++;
+        renderRelatorio();
+      }
+    }
+
+    function exportarExcel() {
+      const data = pedidosFiltrados.map(p => ({
+        Item: p.item,
+        Quantidade: p.quantidade,
+        Parceiro: p.parceiro,
+        Status: p.status,
+        "Data de Entrada": new Date(p.dataEntrada).toLocaleString()
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Relatorio");
+
+      XLSX.writeFile(workbook, "relatorio_pedidos.xlsx");
+    }
+
+    window.onload = fetchPedidos;
+    window.previousPage = previousPage;
+    window.nextPage = nextPage;
+    window.aplicarFiltros = aplicarFiltros;
+    window.exportarExcel = exportarExcel;
+  </script>
 </body>
 </html>
-
