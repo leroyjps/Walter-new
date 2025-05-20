@@ -1,141 +1,145 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Visualizar Pedidos - Walterscheid Powertrain Group</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <header>
-      <nav>
-        <div id="title">
-          <h1>Walterscheid Powertrain Group</h1>
-        </div>
-        <ul>
-          <li><a href="index.html">Home</a></li>
-          <li><a href="gerador.html">Gerar Pedido</a></li>
-          <li><a href="atualizar.html">Atualizar Pedidos</a></li>
-          <li><a href="relatorio.html">Relatório</a></li>
-        </ul>
-      </nav>
-    </header>
-
-    <main>
-      <section class="visualizador-section">
-        <h1>Visualizar Pedidos</h1>
-        <table id="pedidoTable">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Item</th>
-              <th>Quantidade</th>
-              <th>Parceiro de Negócio</th>
-              <th>Status</th>
-              <th>Data de Entrada</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Os pedidos serão inseridos aqui via JavaScript -->
-          </tbody>
-        </table>
-
-        <!-- Controles de paginação -->
-        <div class="pagination">
-          <button id="prev-btn" onclick="previousPage()">Anterior</button>
-          <span id="page-info"></span>
-          <button id="next-btn" onclick="nextPage()">Próxima</button>
-        </div>
-      </section>
-    </main>
-
-    <footer>
-      <div class="footer-logo">
-        <img
-          src="components/images/Walterscheid.jpg"
-          alt="Logo Walterscheid"
-          class="logo"
-        />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualizar Pedidos - Walterscheid Powertrain Group</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <nav>
+      <div id="title">
+        <h1>Walterscheid Powertrain Group</h1>
       </div>
-      <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
-    </footer>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="gerador.html">Gerar Pedido</a></li>
+        <li><a href="atualizar.html">Atualizar Pedidos</a></li>
+      </ul>
+    </nav>
+  </header>
 
-    <script>
-      const formID = "670571cd7cd4e90008d77590"; // ID do formulário de pedidos
-      const token = "nfp_EerkRmRLGWFpi3CudwvneoPcsx1ayxp2b3f5"; // Token de acesso
+  <main>
+    <section class="visualizador-section">
+      <h1>Visualizar Pedidos</h1>
+      <table id="pedidoTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Item</th>
+            <th>Quantidade</th>
+            <th>Parceiro de Negócio</th>
+            <th>Status</th>
+            <th>Data de Entrada</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Pedidos carregados via JS -->
+        </tbody>
+      </table>
 
-      let pedidos = [];
-      let currentPage = 1;
-      const itemsPerPage = 10;
+      <div class="pagination">
+        <button id="prev-btn" onclick="previousPage()">Anterior</button>
+        <span id="page-info"></span>
+        <button id="next-btn" onclick="nextPage()">Próxima</button>
+      </div>
+    </section>
+  </main>
 
-      // Função para buscar os pedidos
-      function fetchPedidos() {
-        fetch(`https://api.netlify.com/api/v1/forms/${formID}/submissions`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            pedidos = data;
-            renderPedidos();
-          })
-          .catch((error) => console.error("Erro ao buscar pedidos:", error));
+  <footer>
+    <div class="footer-logo">
+      <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo" />
+    </div>
+    <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+  </footer>
+
+  <!-- Som de notificação -->
+  <audio id="notificacaoAudio" src="components/sounds/notificacao.mp3" preload="auto"></audio>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.firebasestorage.app",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+      measurementId: "G-9PL8JP0SD4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let pedidos = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let totalAnterior = 0;
+
+    async function fetchPedidos() {
+      const querySnapshot = await getDocs(collection(db, "pedidos"));
+      const novosPedidos = [];
+      querySnapshot.forEach((doc) => {
+        novosPedidos.push({ id: doc.id, ...doc.data() });
+      });
+
+      if (novosPedidos.length > totalAnterior && totalAnterior !== 0) {
+        document.getElementById("notificacaoAudio").play();
       }
 
-      // Função para renderizar pedidos com paginação
-      function renderPedidos() {
-        const tabela = document.getElementById("pedidoTable").querySelector("tbody");
-        tabela.innerHTML = ""; // Limpa a tabela
+      totalAnterior = novosPedidos.length;
+      pedidos = novosPedidos;
+      renderPedidos();
+    }
 
-        const start = (currentPage - 1) * itemsPerPage;
-        const end = start + itemsPerPage;
-        const pedidosToDisplay = pedidos.slice(start, end);
+    function renderPedidos() {
+      const tabela = document.querySelector("#pedidoTable tbody");
+      tabela.innerHTML = "";
 
-        pedidosToDisplay.forEach((pedido, index) => {
-          const novaLinha = tabela.insertRow();
-          novaLinha.innerHTML = `
-            <td>${start + index + 1}</td>
-            <td>${pedido.data.item}</td>
-            <td>${pedido.data.quantidade}</td>
-            <td>${pedido.data.parceiro}</td>
-            <td>${pedido.data.status || "Não Liberado"}</td>
-            <td>${new Date(pedido.created_at).toLocaleString()}</td>
-          `;
-        });
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const pagePedidos = pedidos.slice(start, end);
 
-        // Atualiza a informação da página atual
-        document.getElementById('page-info').innerText = `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
+      pagePedidos.forEach((pedido, index) => {
+        const linha = tabela.insertRow();
+        linha.innerHTML = `
+          <td>${start + index + 1}</td>
+          <td>${pedido.item}</td>
+          <td>${pedido.quantidade}</td>
+          <td>${pedido.parceiro}</td>
+          <td>${pedido.status}</td>
+          <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
+        `;
+      });
 
-        // Habilita ou desabilita os botões de navegação
-        document.getElementById('prev-btn').disabled = currentPage === 1;
-        document.getElementById('next-btn').disabled = currentPage * itemsPerPage >= pedidos.length;
+      document.getElementById("page-info").innerText =
+        `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
+      document.getElementById("prev-btn").disabled = currentPage === 1;
+      document.getElementById("next-btn").disabled = end >= pedidos.length;
+    }
+
+    window.previousPage = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPedidos();
       }
+    };
 
-      // Função para avançar para a próxima página
-      function nextPage() {
-        if (currentPage * itemsPerPage < pedidos.length) {
-          currentPage++;
-          renderPedidos();
-        }
+    window.nextPage = () => {
+      if (currentPage * itemsPerPage < pedidos.length) {
+        currentPage++;
+        renderPedidos();
       }
+    };
 
-      // Função para voltar para a página anterior
-      function previousPage() {
-        if (currentPage > 1) {
-          currentPage--;
-          renderPedidos();
-        }
-      }
-
-      // Chamada inicial para buscar e renderizar os pedidos
-      window.onload = function () {
-        fetchPedidos();
-      };
-    </script>
-  </body>
+    window.onload = () => {
+      fetchPedidos();
+      setInterval(fetchPedidos, 10000); // atualiza a cada 10s
+    };
+  </script>
+</body>
 </html>
