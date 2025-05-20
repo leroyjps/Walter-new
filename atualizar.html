@@ -1,98 +1,169 @@
-<!-- Mesma estrutura do HTML anterior... substituímos o script -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atualizar Pedidos - Walterscheid Powertrain Group</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <nav>
+      <div id="title">
+        <h1>Walterscheid Powertrain Group</h1>
+      </div>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="gerador.html">Gerar Pedido</a></li>
+        <li><a href="visualizador.html">Visualizar Pedidos</a></li>
+      </ul>
+    </nav>
+  </header>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
-    authDomain: "walterscheid-estoque.firebaseapp.com",
-    projectId: "walterscheid-estoque",
-    storageBucket: "walterscheid-estoque.firebasestorage.app",
-    messagingSenderId: "487386736937",
-    appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
-    measurementId: "G-9PL8JP0SD4"
-  };
+  <main>
+    <section>
+      <h1>Atualizar Pedidos</h1>
+      <label for="pedidoId">ID do Pedido na Tabela:</label>
+      <input type="number" id="pedidoId" required />
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+      <label for="status">Atualizar Status:</label>
+      <select id="status" required>
+        <option value="Liberado">Liberado</option>
+        <option value="Não Liberado">Não Liberado</option>
+      </select>
 
-  let pedidos = [];
-  let currentPage = 1;
-  const itemsPerPage = 10;
+      <button id="atualizarBtn">Atualizar Status</button>
 
-  async function buscarPedidos() {
-    const querySnapshot = await getDocs(collection(db, "pedidos"));
-    pedidos = [];
-    querySnapshot.forEach((doc) => {
-      pedidos.push({ id: doc.id, ...doc.data() });
-    });
-    atualizarTabela();
-  }
+      <h2>Pedidos Existentes</h2>
+      <table id="pedidoTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Item</th>
+            <th>Quantidade</th>
+            <th>Parceiro de Negócio</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Conteúdo carregado por JavaScript -->
+        </tbody>
+      </table>
 
-  function atualizarTabela() {
-    const tbody = document.querySelector("#pedidoTable tbody");
-    tbody.innerHTML = "";
+      <div class="pagination">
+        <button id="prev-btn" onclick="previousPage()">Anterior</button>
+        <span id="page-info"></span>
+        <button id="next-btn" onclick="nextPage()">Próxima</button>
+      </div>
+    </section>
+  </main>
 
-    const start = (currentPage - 1) * itemsPerPage;
-    const pagePedidos = pedidos.slice(start, start + itemsPerPage);
+  <footer>
+    <div class="footer-logo">
+      <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo" />
+    </div>
+    <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+  </footer>
 
-    pagePedidos.forEach((pedido, index) => {
-      const linha = tbody.insertRow();
-      linha.innerHTML = `
-        <td>${start + index + 1}</td>
-        <td>${pedido.item}</td>
-        <td>${pedido.quantidade}</td>
-        <td>${pedido.parceiro}</td>
-        <td>${pedido.status}</td>
-      `;
-    });
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    document.getElementById("page-info").innerText =
-      `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
-    document.getElementById("prev-btn").disabled = currentPage === 1;
-    document.getElementById("next-btn").disabled = (start + itemsPerPage) >= pedidos.length;
-  }
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.firebasestorage.app",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+      measurementId: "G-9PL8JP0SD4"
+    };
 
-  document.getElementById("atualizarBtn").onclick = async function () {
-    const pedidoId = document.getElementById("pedidoId").value.trim();
-    const novoStatus = document.getElementById("status").value;
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    if (!pedidoId) {
-      alert("Informe o ID do pedido corretamente.");
-      return;
-    }
+    let pedidos = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
-    const pedidoSelecionado = pedidos.find((p, i) => (i + 1).toString() === pedidoId);
-
-    if (!pedidoSelecionado) {
-      alert("ID inválido.");
-      return;
-    }
-
-    try {
-      const docRef = doc(db, "pedidos", pedidoSelecionado.id);
-      await updateDoc(docRef, { status: novoStatus });
-      alert("Status atualizado com sucesso!");
-      buscarPedidos();
-    } catch (error) {
-      console.error(error);
-      alert("Erro ao atualizar pedido.");
-    }
-  };
-
-  window.previousPage = () => {
-    if (currentPage > 1) {
-      currentPage--;
+    async function buscarPedidos() {
+      const querySnapshot = await getDocs(collection(db, "pedidos"));
+      pedidos = [];
+      querySnapshot.forEach((doc) => {
+        pedidos.push({ id: doc.id, ...doc.data() });
+      });
       atualizarTabela();
     }
-  };
 
-  window.nextPage = () => {
-    if (currentPage * itemsPerPage < pedidos.length) {
-      currentPage++;
-      atualizarTabela();
+    function atualizarTabela() {
+      const tbody = document.querySelector("#pedidoTable tbody");
+      tbody.innerHTML = "";
+
+      const start = (currentPage - 1) * itemsPerPage;
+      const pagePedidos = pedidos.slice(start, start + itemsPerPage);
+
+      pagePedidos.forEach((pedido, index) => {
+        const linha = tbody.insertRow();
+        linha.innerHTML = `
+          <td>${start + index + 1}</td>
+          <td>${pedido.item}</td>
+          <td>${pedido.quantidade}</td>
+          <td>${pedido.parceiro}</td>
+          <td>${pedido.status}</td>
+        `;
+      });
+
+      document.getElementById("page-info").innerText =
+        `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
+      document.getElementById("prev-btn").disabled = currentPage === 1;
+      document.getElementById("next-btn").disabled =
+        (start + itemsPerPage) >= pedidos.length;
     }
-  };
 
-  window.onload = buscarPedidos;
-</script>
+    document.getElementById("atualizarBtn").onclick = async function () {
+      const idTabela = parseInt(document.getElementById("pedidoId").value.trim());
+      const novoStatus = document.getElementById("status").value;
+
+      if (isNaN(idTabela) || idTabela <= 0) {
+        alert("Informe um número de ID válido da tabela.");
+        return;
+      }
+
+      const indexPedido = (currentPage - 1) * itemsPerPage + (idTabela - 1);
+
+      if (!pedidos[indexPedido]) {
+        alert("ID informado não corresponde a nenhum pedido listado.");
+        return;
+      }
+
+      try {
+        const pedidoDoc = doc(db, "pedidos", pedidos[indexPedido].id);
+        await updateDoc(pedidoDoc, { status: novoStatus });
+        alert("Status atualizado com sucesso!");
+        buscarPedidos(); // Atualiza a tabela
+      } catch (error) {
+        console.error(error);
+        alert("Erro ao atualizar o status.");
+      }
+    };
+
+    window.previousPage = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        atualizarTabela();
+      }
+    };
+
+    window.nextPage = () => {
+      if (currentPage * itemsPerPage < pedidos.length) {
+        currentPage++;
+        atualizarTabela();
+      }
+    };
+
+    window.onload = buscarPedidos;
+  </script>
+</body>
+</html>
