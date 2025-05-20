@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Relatório de Pedidos - Walterscheid Powertrain Group</title>
+  <title>Relatório de Pedidos - Walterscheid</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
   <header>
@@ -25,7 +27,6 @@
   <main>
     <section>
       <h1>Relatório de Pedidos</h1>
-
       <div class="filtros">
         <input type="text" id="filtroItem" placeholder="Item" />
         <input type="text" id="filtroParceiro" placeholder="Parceiro" />
@@ -41,6 +42,7 @@
         <button onclick="exportarExcel()">Exportar Excel</button>
       </div>
 
+      <canvas id="graficoOperadores" height="100"></canvas>
       <div id="relatorioContainer"></div>
 
       <div class="pagination">
@@ -58,10 +60,6 @@
     <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
   </footer>
 
-  <!-- SheetJS para exportar Excel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -87,9 +85,7 @@
     async function fetchPedidos() {
       const querySnapshot = await getDocs(collection(db, "pedidos"));
       pedidos = [];
-      querySnapshot.forEach((doc) => {
-        pedidos.push({ id: doc.id, ...doc.data() });
-      });
+      querySnapshot.forEach(doc => pedidos.push({ id: doc.id, ...doc.data() }));
       aplicarFiltros();
     }
 
@@ -103,21 +99,17 @@
 
       pedidosFiltrados = pedidos.filter(p => {
         const data = new Date(p.dataEntrada);
-        const dentroData =
-          (!dataInicio || data >= new Date(dataInicio)) &&
-          (!dataFim || data <= new Date(dataFim + "T23:59:59"));
-
-        return (
-          (!item || p.item.toLowerCase().includes(item)) &&
-          (!parceiro || p.parceiro.toLowerCase().includes(parceiro)) &&
-          (!status || p.status === status) &&
-          (!operador || (p.operador || "").toLowerCase().includes(operador)) &&
-          dentroData
-        );
+        const dentroData = (!dataInicio || data >= new Date(dataInicio)) && (!dataFim || data <= new Date(dataFim + "T23:59:59"));
+        return (!item || p.item.toLowerCase().includes(item)) &&
+               (!parceiro || p.parceiro.toLowerCase().includes(parceiro)) &&
+               (!status || p.status === status) &&
+               (!operador || (p.operador || "").toLowerCase().includes(operador)) &&
+               dentroData;
       });
 
       currentPage = 1;
       renderRelatorio();
+      exibirGraficoOperadores();
     }
 
     function renderRelatorio() {
@@ -130,12 +122,12 @@
       pagePedidos.forEach(p => {
         const entrada = new Date(p.dataEntrada);
         const liberacao = p.dataLiberacao ? new Date(p.dataLiberacao) : null;
-        const tempoDecorrido = liberacao
-          ? `${Math.round((liberacao - entrada) / 60000)} min`
-          : "-";
+        const tempoMin = liberacao ? Math.round((liberacao - entrada) / 60000) : null;
 
         const div = document.createElement("div");
         div.classList.add("pedido");
+        if (tempoMin && tempoMin > 30) div.style.backgroundColor = "#ffe6e6";
+
         div.innerHTML = `
           <p><strong>Item:</strong> ${p.item}</p>
           <p><strong>Quantidade:</strong> ${p.quantidade}</p>
@@ -144,17 +136,55 @@
           <p><strong>Operador:</strong> ${p.operador || "-"}</p>
           <p><strong>Data de Entrada:</strong> ${entrada.toLocaleString()}</p>
           <p><strong>Data de Liberação:</strong> ${liberacao ? liberacao.toLocaleString() : "-"}</p>
-          <p><strong>Tempo Total:</strong> ${tempoDecorrido}</p>
+          <p><strong>Tempo Total:</strong> ${tempoMin ? tempoMin + " min" : "-"}</p>
           <hr />
         `;
         container.appendChild(div);
       });
 
-      document.getElementById("page-info").innerText =
-        `Página ${currentPage} de ${Math.ceil(pedidosFiltrados.length / itemsPerPage)}`;
+      document.getElementById("page-info").innerText = `Página ${currentPage} de ${Math.ceil(pedidosFiltrados.length / itemsPerPage)}`;
       document.getElementById("prev-btn").disabled = currentPage === 1;
-      document.getElementById("next-btn").disabled =
-        start + itemsPerPage >= pedidosFiltrados.length;
+      document.getElementById("next-btn").disabled = start + itemsPerPage >= pedidosFiltrados.length;
+    }
+
+    function exibirGraficoOperadores() {
+      const temposPorOperador = {};
+      pedidosFiltrados.forEach(p => {
+        if (p.status === "Liberado" && p.dataEntrada && p.dataLiberacao) {
+          const tempoMin = (new Date(p.dataLiberacao) - new Date(p.dataEntrada)) / 60000;
+          const op = p.operador || "Desconhecido";
+          if (!temposPorOperador[op]) temposPorOperador[op] = [];
+          temposPorOperador[op].push(tempoMin);
+        }
+      });
+
+      const labels = Object.keys(temposPorOperador);
+      const dados = labels.map(op => {
+        const soma = temposPorOperador[op].reduce((a, b) => a + b, 0);
+        return Math.round(soma / temposPorOperador[op].length);
+      });
+
+      const ctx = document.getElementById("graficoOperadores").getContext("2d");
+      if (window.grafico) window.grafico.destroy();
+      window.grafico = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Tempo Médio (min)',
+            data: dados,
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Minutos' } }
+          }
+        }
+      });
     }
 
     function previousPage() {
@@ -192,15 +222,10 @@
       const worksheet = XLSX.utils.json_to_sheet(data);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Relatorio");
-
       XLSX.writeFile(workbook, "relatorio_pedidos.xlsx");
     }
 
     window.onload = fetchPedidos;
-    window.previousPage = previousPage;
-    window.nextPage = nextPage;
-    window.aplicarFiltros = aplicarFiltros;
-    window.exportarExcel = exportarExcel;
   </script>
 </body>
 </html>
