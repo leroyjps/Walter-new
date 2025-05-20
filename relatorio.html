@@ -34,6 +34,7 @@
           <option value="Liberado">Liberado</option>
           <option value="Não Liberado">Não Liberado</option>
         </select>
+        <input type="text" id="filtroOperador" placeholder="Operador" />
         <input type="date" id="dataInicio" />
         <input type="date" id="dataFim" />
         <button onclick="aplicarFiltros()">Filtrar</button>
@@ -96,6 +97,7 @@
       const item = document.getElementById("filtroItem").value.toLowerCase();
       const parceiro = document.getElementById("filtroParceiro").value.toLowerCase();
       const status = document.getElementById("filtroStatus").value;
+      const operador = document.getElementById("filtroOperador").value.toLowerCase();
       const dataInicio = document.getElementById("dataInicio").value;
       const dataFim = document.getElementById("dataFim").value;
 
@@ -109,6 +111,7 @@
           (!item || p.item.toLowerCase().includes(item)) &&
           (!parceiro || p.parceiro.toLowerCase().includes(parceiro)) &&
           (!status || p.status === status) &&
+          (!operador || (p.operador || "").toLowerCase().includes(operador)) &&
           dentroData
         );
       });
@@ -132,6 +135,7 @@
           <p><strong>Quantidade:</strong> ${p.quantidade}</p>
           <p><strong>Parceiro:</strong> ${p.parceiro}</p>
           <p><strong>Status:</strong> ${p.status}</p>
+          <p><strong>Operador:</strong> ${p.operador || "-"}</p>
           <p><strong>Data de Entrada:</strong> ${new Date(p.dataEntrada).toLocaleString()}</p>
           <hr />
         `;
@@ -165,6 +169,7 @@
         Quantidade: p.quantidade,
         Parceiro: p.parceiro,
         Status: p.status,
+        Operador: p.operador || "-",
         "Data de Entrada": new Date(p.dataEntrada).toLocaleString()
       }));
 
