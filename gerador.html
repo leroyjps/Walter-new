@@ -36,6 +36,9 @@
         <label for="parceiro">Parceiro de Negócio:</label>
         <input type="text" id="parceiro" required />
 
+        <label for="emailCriador">E-mail do Criador:</label>
+        <input type="email" id="emailCriador" required />
+
         <button type="submit" id="submitButton">Gerar Pedido</button>
         <button type="button" id="cancelarEdicao" style="display: none;">Cancelar Edição</button>
       </form>
@@ -105,12 +108,14 @@
       const item = document.getElementById("item").value;
       const quantidade = document.getElementById("quantidade").value;
       const parceiro = document.getElementById("parceiro").value;
+      const emailCriador = document.getElementById("emailCriador").value;
       const id = document.getElementById("pedidoFirebaseId").value;
 
       const pedido = {
         item,
         quantidade,
         parceiro,
+        emailCriador,
         status: "Não Liberado",
         dataEntrada: new Date().toISOString(),
         dataLiberacao: null
@@ -168,6 +173,7 @@
       document.getElementById("item").value = pedido.item;
       document.getElementById("quantidade").value = pedido.quantidade;
       document.getElementById("parceiro").value = pedido.parceiro;
+      document.getElementById("emailCriador").value = pedido.emailCriador || "";
       document.getElementById("pedidoFirebaseId").value = id;
       btnSubmit.innerText = "Atualizar Pedido";
       btnCancelar.style.display = "inline";
