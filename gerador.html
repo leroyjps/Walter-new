@@ -23,6 +23,17 @@
   </header>
 
   <main>
+    <section id="auth-section">
+      <h2>Autenticação</h2>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="Email" required />
+        <input type="password" id="loginPassword" placeholder="Senha" required />
+        <button type="submit">Entrar</button>
+      </form>
+      <button id="logoutBtn" style="display:none;">Sair</button>
+      <p id="usuarioLogado"></p>
+    </section>
+
     <section>
       <h1>Gerar Pedido</h1>
       <form id="pedidoForm">
@@ -33,27 +44,17 @@
         <label for="quantidade">Quantidade:</label>
         <input type="number" id="quantidade" required />
 
-         <label for="parceiro">Parceiro de Negócio:</label>
-<select id="parceiro" required>
-  <option value="">Selecione um parceiro</option>
-  <option value="AGEMEC">AGEMEC</option>
-  <option value="BORMIL">BORMIL</option>
-  <option value="SANMAC">SANMAC</option>
-  <option value="RETISUL">RETISUL</option>
-  <option value="INSDUSTERM">INSDUSTERM</option>
-  <option value="INDUTHERM">INDUTHERM</option>
-  <option value="IMAC">IMAC</option>
-</select>
-
-        <label for="emailCriador">E-mail do Solicitante:</label>
-<select id="emailCriador" required>
-  <option value="">Selecione um e-mail</option>
-  <option value="Ext_rodrigo.leites@walterscheid.com">Ext_rodrigo.leites@walterscheid.com</option>
-  <option value="William.Mattos@walterscheid.com">William.Mattos@walterscheid.com</option>
-  <option value="william.padilha@walterscheid.com">william.padilha@walterscheid.com</option>
-  <option value="Mauricio.Ferreira@walterscheid.com">Mauricio.Ferreira@walterscheid.com</option>
-  <option value="Ricardo.Cappelin@walterscheid.com">Ricardo.Cappelin@walterscheid.com</option>
-</select>
+        <label for="parceiro">Parceiro de Negócio:</label>
+        <select id="parceiro" required>
+          <option value="">Selecione um parceiro</option>
+          <option value="AGEMEC">AGEMEC</option>
+          <option value="BORMIL">BORMIL</option>
+          <option value="SANMAC">SANMAC</option>
+          <option value="RETISUL">RETISUL</option>
+          <option value="INSDUSTERM">INSDUSTERM</option>
+          <option value="INDUTHERM">INDUTHERM</option>
+          <option value="IMAC">IMAC</option>
+        </select>
 
         <button type="submit" id="submitButton">Gerar Pedido</button>
         <button type="button" id="cancelarEdicao" style="display: none;">Cancelar Edição</button>
@@ -99,6 +100,12 @@
       updateDoc,
       deleteDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
@@ -112,11 +119,40 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
     const form = document.getElementById("pedidoForm");
     const tabela = document.querySelector("#pedidoTable tbody");
     const btnCancelar = document.getElementById("cancelarEdicao");
     const btnSubmit = document.getElementById("submitButton");
+
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          alert("Login realizado!");
+        })
+        .catch((error) => {
+          alert("Erro ao fazer login: " + error.message);
+        });
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      signOut(auth);
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("auth-section").style.display = "block";
+        document.getElementById("logoutBtn").style.display = "inline";
+        document.getElementById("usuarioLogado").innerText = `Logado como: ${user.email}`;
+      } else {
+        document.getElementById("usuarioLogado").innerText = "Não autenticado";
+      }
+    });
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -124,14 +160,19 @@
       const item = document.getElementById("item").value;
       const quantidade = document.getElementById("quantidade").value;
       const parceiro = document.getElementById("parceiro").value;
-      const emailCriador = document.getElementById("emailCriador").value;
       const id = document.getElementById("pedidoFirebaseId").value;
+
+      const user = auth.currentUser;
+      if (!user) {
+        alert("Usuário não autenticado.");
+        return;
+      }
 
       const pedido = {
         item,
         quantidade,
         parceiro,
-        emailCriador,
+        emailCriador: user.email,
         status: "Não Liberado",
         dataEntrada: new Date().toISOString(),
         dataLiberacao: null
@@ -189,7 +230,6 @@
       document.getElementById("item").value = pedido.item;
       document.getElementById("quantidade").value = pedido.quantidade;
       document.getElementById("parceiro").value = pedido.parceiro;
-      document.getElementById("emailCriador").value = pedido.emailCriador || "";
       document.getElementById("pedidoFirebaseId").value = id;
       btnSubmit.innerText = "Atualizar Pedido";
       btnCancelar.style.display = "inline";
