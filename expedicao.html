@@ -70,8 +70,8 @@
         <label for="transportadora">Transportadora:</label>
         <input type="text" id="transportadora" required />
 
-        <label for="foto">Foto do Produto:</label>
-        <input type="file" id="foto" accept="image/*" capture="environment" required />
+        <label for="foto">Fotos do Produto (até 5):</label>
+        <input type="file" id="foto" accept="image/*" capture="environment" multiple required />
 
         <button type="submit">Enviar Registro</button>
       </form>
@@ -127,7 +127,7 @@
       const volume = document.getElementById("volume").value;
       const item = document.getElementById("item").value;
       const transportadora = document.getElementById("transportadora").value;
-      const fotoFile = document.getElementById("foto").files[0];
+      const arquivos = document.getElementById("foto").files;
 
       const user = auth.currentUser;
       if (!user) {
@@ -136,16 +136,22 @@
       }
 
       try {
-        const storageRef = ref(storage, `expedicoes/${Date.now()}_${fotoFile.name}`);
-        await uploadBytes(storageRef, fotoFile);
-        const fotoURL = await getDownloadURL(storageRef);
+        const urls = [];
+
+        for (let i = 0; i < arquivos.length && i < 5; i++) {
+          const file = arquivos[i];
+          const storageRef = ref(storage, `expedicoes/${Date.now()}_${file.name}`);
+          await uploadBytes(storageRef, file);
+          const url = await getDownloadURL(storageRef);
+          urls.push(url);
+        }
 
         await addDoc(collection(db, "expedicoes"), {
           notaFiscal,
           volume,
           item,
           transportadora,
-          fotoURL,
+          fotos: urls,
           operador: user.email,
           dataHora: new Date().toISOString()
         });
