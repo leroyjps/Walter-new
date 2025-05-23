@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualizar Expedições - Walterscheid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .expedicao-card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .expedicao-card img {
+      width: 150px;
+      height: auto;
+      border-radius: 4px;
+      object-fit: cover;
+    }
+    .expedicao-info {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <div id="title">
+        <h1>Walterscheid Powertrain Group</h1>
+      </div>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="expedicao.html">Registrar Expedição</a></li>
+        <li><a href="visualizarExpedicoes.html">Visualizar Expedições</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h1>Expedições Registradas</h1>
+      <div id="expedicoesContainer"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-logo">
+      <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo" />
+    </div>
+    <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      deleteDoc,
+      doc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.appspot.com",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+      measurementId: "G-9PL8JP0SD4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const container = document.getElementById("expedicoesContainer");
+
+    async function carregarExpedicoes() {
+      const snapshot = await getDocs(collection(db, "expedicoes"));
+      container.innerHTML = "";
+
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const card = document.createElement("div");
+        card.className = "expedicao-card";
+        card.innerHTML = `
+          <img src="${data.fotoURL}" alt="Foto do Produto">
+          <div class="expedicao-info">
+            <p><strong>Nota Fiscal:</strong> ${data.notaFiscal}</p>
+            <p><strong>Volume:</strong> ${data.volume}</p>
+            <p><strong>Item:</strong> ${data.item}</p>
+            <p><strong>Transportadora:</strong> ${data.transportadora}</p>
+            <p><strong>Operador:</strong> ${data.operador}</p>
+            <p><strong>Data:</strong> ${new Date(data.dataHora).toLocaleString()}</p>
+            <button onclick="excluirExpedicao('${docSnap.id}')">Excluir</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    window.excluirExpedicao = async (id) => {
+      if (confirm("Deseja realmente excluir este registro de expedição?")) {
+        try {
+          await deleteDoc(doc(db, "expedicoes", id));
+          alert("Expedição excluída com sucesso.");
+          carregarExpedicoes();
+        } catch (err) {
+          console.error("Erro ao excluir:", err);
+          alert("Erro ao excluir expedição.");
+        }
+      }
+    };
+
+    window.onload = carregarExpedicoes;
+  </script>
+</body>
+</html>
