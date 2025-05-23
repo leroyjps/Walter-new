@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expedição - Walterscheid Powertrain Group</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <nav>
+      <div id="title">
+        <h1>Walterscheid Powertrain Group</h1>
+      </div>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="gerador.html">Gerar Pedido</a></li>
+        <li><a href="visualizador.html">Visualizar Pedidos</a></li>
+        <li><a href="atualizar.html">Atualizar Pedidos</a></li>
+        <li><a href="relatorio.html">Relatorio</a></li>
+        <li><a href="expedicao.html">Expedição</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h1>Registro de Expedição</h1>
+      <form id="expedicaoForm">
+        <label for="notaFiscal">Nota Fiscal:</label>
+        <input type="text" id="notaFiscal" required />
+
+        <label for="volume">Volume:</label>
+        <input type="text" id="volume" required />
+
+        <label for="item">Item:</label>
+        <input type="text" id="item" required />
+
+        <label for="transportadora">Transportadora:</label>
+        <input type="text" id="transportadora" required />
+
+        <label for="foto">Foto do Produto:</label>
+        <input type="file" id="foto" accept="image/*" capture="environment" required />
+
+        <button type="submit">Enviar Registro</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-logo">
+      <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo" />
+    </div>
+    <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getStorage,
+      ref,
+      uploadBytes,
+      getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+    import {
+      getAuth,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.appspot.com",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+      measurementId: "G-9PL8JP0SD4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    const auth = getAuth(app);
+
+    const form = document.getElementById("expedicaoForm");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const notaFiscal = document.getElementById("notaFiscal").value;
+      const volume = document.getElementById("volume").value;
+      const item = document.getElementById("item").value;
+      const transportadora = document.getElementById("transportadora").value;
+      const fotoFile = document.getElementById("foto").files[0];
+
+      const user = auth.currentUser;
+      if (!user) {
+        alert("Você precisa estar logado para registrar expedição.");
+        return;
+      }
+
+      try {
+        const storageRef = ref(storage, `expedicoes/${Date.now()}_${fotoFile.name}`);
+        await uploadBytes(storageRef, fotoFile);
+        const fotoURL = await getDownloadURL(storageRef);
+
+        await addDoc(collection(db, "expedicoes"), {
+          notaFiscal,
+          volume,
+          item,
+          transportadora,
+          fotoURL,
+          operador: user.email,
+          dataHora: new Date().toISOString()
+        });
+
+        alert("Expedição registrada com sucesso!");
+        form.reset();
+      } catch (error) {
+        console.error("Erro ao registrar expedição:", error);
+        alert("Erro ao registrar expedição. Verifique a conexão ou tente novamente.");
+      }
+    });
+  </script>
+</body>
+</html>
