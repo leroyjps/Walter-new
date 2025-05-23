@@ -121,6 +121,13 @@
 
     const form = document.getElementById("expedicaoForm");
 
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        alert("Você precisa estar logado para registrar expedição.");
+        window.location.href = "index.html";
+      }
+    });
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -138,6 +145,7 @@
 
       try {
         const urls = [];
+        console.log("Iniciando upload de imagens", arquivos);
 
         for (let i = 0; i < arquivos.length && i < 5; i++) {
           const file = arquivos[i];
@@ -160,7 +168,7 @@
         alert("Expedição registrada com sucesso!");
         form.reset();
       } catch (error) {
-        console.error("Erro ao registrar expedição:", error);
+        console.error("Erro ao registrar expedição:", error.code, error.message);
         alert("Erro ao registrar expedição. Verifique a conexão ou tente novamente.");
       }
     });
