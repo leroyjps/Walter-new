@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualizar Expedições</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .expedicao-card {
+      border: 1px solid #ccc;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem;
+      background-color: #f9f9f9;
+    }
+    .fotos-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .fotos-container img {
+      max-width: 100px;
+      height: auto;
+      border-radius: 4px;
+    }
+    .expedicao-card input {
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 0.4rem;
+    }
+    .expedicao-card button {
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Expedições Registradas</h1>
+  </header>
+  <main>
+    <div id="expedicoesContainer"></div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      updateDoc,
+      deleteDoc,
+      doc
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.appspot.com",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const container = document.getElementById('expedicoesContainer');
+
+    async function carregarExpedicoes() {
+      const snapshot = await getDocs(collection(db, 'expedicoes'));
+      container.innerHTML = '';
+
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+
+        const card = document.createElement('div');
+        card.className = 'expedicao-card';
+
+        card.innerHTML = `
+          <input type="text" value="${data.notaFiscal}" placeholder="Nota Fiscal" id="nf-${id}" />
+          <input type="text" value="${data.volume}" placeholder="Volume" id="vol-${id}" />
+          <input type="text" value="${data.item}" placeholder="Item" id="item-${id}" />
+          <input type="text" value="${data.transportadora}" placeholder="Transportadora" id="trans-${id}" />
+          <p><strong>Operador:</strong> ${data.operador}</p>
+          <p><strong>Data:</strong> ${new Date(data.dataHora).toLocaleString()}</p>
+          <div class="fotos-container">
+            ${data.fotos.map(url => `<img src="${url}" alt="foto">`).join('')}
+          </div>
+          <button onclick="salvarAlteracoes('${id}')">Salvar</button>
+          <button onclick="excluirExpedicao('${id}')">Excluir</button>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    window.salvarAlteracoes = async (id) => {
+      const notaFiscal = document.getElementById(`nf-${id}`).value;
+      const volume = document.getElementById(`vol-${id}`).value;
+      const item = document.getElementById(`item-${id}`).value;
+      const transportadora = document.getElementById(`trans-${id}`).value;
+
+      try {
+        await updateDoc(doc(db, 'expedicoes', id), {
+          notaFiscal,
+          volume,
+          item,
+          transportadora
+        });
+        alert('Alterações salvas com sucesso.');
+      } catch (error) {
+        console.error('Erro ao salvar:', error);
+        alert('Erro ao salvar alterações.');
+      }
+    };
+
+    window.excluirExpedicao = async (id) => {
+      if (confirm('Deseja realmente excluir este registro?')) {
+        try {
+          await deleteDoc(doc(db, 'expedicoes', id));
+          alert('Registro excluído com sucesso.');
+          carregarExpedicoes();
+        } catch (error) {
+          console.error('Erro ao excluir:', error);
+          alert('Erro ao excluir registro.');
+        }
+      }
+    };
+
+    window.onload = carregarExpedicoes;
+  </script>
+</body>
+</html>
