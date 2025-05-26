@@ -125,52 +125,54 @@
       if (!user) {
         alert("Você precisa estar logado para registrar expedição.");
         window.location.href = "index.html";
-      }
-    });
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const notaFiscal = document.getElementById("notaFiscal").value;
-      const volume = document.getElementById("volume").value;
-      const item = document.getElementById("item").value;
-      const transportadora = document.getElementById("transportadora").value;
-      const arquivos = document.getElementById("foto").files;
-
-      const user = auth.currentUser;
-      if (!user) {
-        alert("Você precisa estar logado para registrar expedição.");
         return;
       }
 
-      try {
-        const urls = [];
-        console.log("Iniciando upload de imagens", arquivos);
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-        for (let i = 0; i < arquivos.length && i < 5; i++) {
-          const file = arquivos[i];
-          const storageRef = ref(storage, `expedicoes/${Date.now()}_${file.name}`);
-          await uploadBytes(storageRef, file);
-          const url = await getDownloadURL(storageRef);
-          urls.push(url);
-        }
+        const notaFiscal = document.getElementById("notaFiscal").value;
+        const volume = document.getElementById("volume").value;
+        const item = document.getElementById("item").value;
+        const transportadora = document.getElementById("transportadora").value;
+        const arquivos = document.getElementById("foto").files;
 
-        await addDoc(collection(db, "expedicoes"), {
+        console.log("Dados prontos para envio:", {
           notaFiscal,
           volume,
           item,
           transportadora,
-          fotos: urls,
-          operador: user.email,
-          dataHora: new Date().toISOString()
+          arquivos
         });
 
-        alert("Expedição registrada com sucesso!");
-        form.reset();
-      } catch (error) {
-        console.error("Erro ao registrar expedição:", error.code, error.message);
-        alert("Erro ao registrar expedição. Verifique a conexão ou tente novamente.");
-      }
+        try {
+          const urls = [];
+
+          for (let i = 0; i < arquivos.length && i < 5; i++) {
+            const file = arquivos[i];
+            const storageRef = ref(storage, `expedicoes/${Date.now()}_${file.name}`);
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
+            urls.push(url);
+          }
+
+          await addDoc(collection(db, "expedicoes"), {
+            notaFiscal,
+            volume,
+            item,
+            transportadora,
+            fotos: urls,
+            operador: user.email,
+            dataHora: new Date().toISOString()
+          });
+
+          alert("Expedição registrada com sucesso!");
+          form.reset();
+        } catch (error) {
+          console.error("Erro ao registrar expedição:", error.code, error.message);
+          alert("Erro ao registrar expedição. Verifique a conexão ou tente novamente.");
+        }
+      });
     });
   </script>
 </body>
