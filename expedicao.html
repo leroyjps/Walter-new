@@ -150,7 +150,21 @@
 
           for (let i = 0; i < arquivos.length && i < 5; i++) {
             const file = arquivos[i];
-            const storageRef = ref(storage, `expedicoes/${Date.now()}_${file.name}`);
+
+            // Validação do tamanho (máx 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+              alert(`O arquivo "${file.name}" excede 10MB.`);
+              return;
+            }
+
+            // Validação do tipo
+            if (!file.type.startsWith("image/")) {
+              alert(`O arquivo "${file.name}" não é uma imagem válida.`);
+              return;
+            }
+
+            const safeName = file.name.replaceAll(' ', '_');
+            const storageRef = ref(storage, `expedicoes/${Date.now()}_${safeName}`);
             await uploadBytes(storageRef, file);
             const url = await getDownloadURL(storageRef);
             urls.push(url);
