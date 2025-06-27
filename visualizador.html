@@ -17,7 +17,7 @@
         <li><a href="index.html">Home</a></li>
         <li><a href="gerador.html">Gerar Pedido</a></li>
         <li><a href="atualizar.html">Atualizar Pedidos</a></li>
-         <li><a href="Relatorio.html">Relatorio</a></li>
+        <li><a href="Relatorio.html">Relatorio</a></li>
       </ul>
     </nav>
   </header>
@@ -30,7 +30,7 @@
           <tr>
             <th>ID</th>
             <th>Item</th>
-             <th>Op</th>
+            <th>Op</th> <!-- Adicionando a coluna OP -->
             <th>Quantidade</th>
             <th>Parceiro de Negócio</th>
             <th>Status</th>
@@ -61,118 +61,119 @@
   <audio id="notificacaoAudio" src="components/audio/alerta.mp3" preload="auto"></audio>
 
   <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    getDocs,
-    query,
-    orderBy
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      query,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
-    authDomain: "walterscheid-estoque.firebaseapp.com",
-    projectId: "walterscheid-estoque",
-    storageBucket: "walterscheid-estoque.firebasestorage.app",
-    messagingSenderId: "487386736937",
-    appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
-    measurementId: "G-9PL8JP0SD4"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.firebasestorage.app",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+      measurementId: "G-9PL8JP0SD4"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  let pedidos = [];
-  let currentPage = 1;
-  const itemsPerPage = 10;
-  let ultimoPedidoId = null;
-  let pedidoDestaqueId = null;
+    let pedidos = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let ultimoPedidoId = null;
+    let pedidoDestaqueId = null;
 
-  async function fetchPedidos() {
-    const q = query(collection(db, "pedidos"), orderBy("dataEntrada", "desc"));
-    const querySnapshot = await getDocs(q);
-    const novosPedidos = [];
+    async function fetchPedidos() {
+      const q = query(collection(db, "pedidos"), orderBy("dataEntrada", "desc"));
+      const querySnapshot = await getDocs(q);
+      const novosPedidos = [];
 
-    querySnapshot.forEach((doc) => {
-      novosPedidos.push({ id: doc.id, ...doc.data() });
-    });
+      querySnapshot.forEach((doc) => {
+        novosPedidos.push({ id: doc.id, ...doc.data() });
+      });
 
-    // Detecta novo pedido
-    const novoDetectado = pedidos.length > 0 && novosPedidos.length > 0 && novosPedidos[0].id !== pedidos[0].id;
-    if (novoDetectado) {
-      pedidoDestaqueId = novosPedidos[0].id;
-      document.getElementById("notificacaoAudio").play();
-      setTimeout(() => {
-        pedidoDestaqueId = null;
-        renderPedidos();
-      }, 6000); // Remove destaque após 6 segundos
-    }
-
-    pedidos = novosPedidos;
-    renderPedidos();
-  }
-
-  function renderPedidos() {
-    const tabela = document.querySelector("#pedidoTable tbody");
-    tabela.innerHTML = "";
-
-    const start = (currentPage - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    const pagePedidos = pedidos.slice(start, end);
-
-    pagePedidos.forEach((pedido, index) => {
-      const linha = tabela.insertRow();
-      if (pedido.id === pedidoDestaqueId) {
-        linha.style.backgroundColor = "#fff3cd"; // fundo amarelo claro
-        linha.style.fontWeight = "bold";
-        linha.classList.add("destaque-pedido");
+      // Detecta novo pedido
+      const novoDetectado = pedidos.length > 0 && novosPedidos.length > 0 && novosPedidos[0].id !== pedidos[0].id;
+      if (novoDetectado) {
+        pedidoDestaqueId = novosPedidos[0].id;
+        document.getElementById("notificacaoAudio").play();
+        setTimeout(() => {
+          pedidoDestaqueId = null;
+          renderPedidos();
+        }, 6000); // Remove destaque após 6 segundos
       }
-      linha.innerHTML = `
-        <td>${start + index + 1}</td>
-        <td>${pedido.item}</td>
-        <td>${pedido.op}</td>
-        <td>${pedido.quantidade}</td>
-        <td>${pedido.parceiro}</td>
-        <td>${pedido.status}</td>
-        <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
-      `;
-    });
 
-    document.getElementById("page-info").innerText =
-      `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
-    document.getElementById("prev-btn").disabled = currentPage === 1;
-    document.getElementById("next-btn").disabled = end >= pedidos.length;
-  }
-
-  window.previousPage = () => {
-    if (currentPage > 1) {
-      currentPage--;
+      pedidos = novosPedidos;
       renderPedidos();
     }
-  };
 
-  window.nextPage = () => {
-    if (currentPage * itemsPerPage < pedidos.length) {
-      currentPage++;
-      renderPedidos();
+    function renderPedidos() {
+      const tabela = document.querySelector("#pedidoTable tbody");
+      tabela.innerHTML = "";
+
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const pagePedidos = pedidos.slice(start, end);
+
+      pagePedidos.forEach((pedido, index) => {
+        const linha = tabela.insertRow();
+        if (pedido.id === pedidoDestaqueId) {
+          linha.style.backgroundColor = "#fff3cd"; // fundo amarelo claro
+          linha.style.fontWeight = "bold";
+          linha.classList.add("destaque-pedido");
+        }
+        linha.innerHTML = `
+          <td>${start + index + 1}</td>
+          <td>${pedido.item}</td>
+          <td>${pedido.op}</td> <!-- Exibindo a OP -->
+          <td>${pedido.quantidade}</td>
+          <td>${pedido.parceiro}</td>
+          <td>${pedido.status}</td>
+          <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
+        `;
+      });
+
+      document.getElementById("page-info").innerText =
+        `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
+      document.getElementById("prev-btn").disabled = currentPage === 1;
+      document.getElementById("next-btn").disabled = end >= pedidos.length;
     }
-  };
 
-  window.onload = () => {
-    fetchPedidos();
-    setInterval(fetchPedidos, 10000); // atualiza a cada 10s
-  };
-</script>
-<style>
-  .destaque-pedido {
-    animation: piscar 1s ease-in-out infinite;
-  }
+    window.previousPage = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPedidos();
+      }
+    };
 
-  @keyframes piscar {
-    0%, 100% { background-color: #fff3cd; }
-    50% { background-color: #ffeeba; }
-  }
-</style>
+    window.nextPage = () => {
+      if (currentPage * itemsPerPage < pedidos.length) {
+        currentPage++;
+        renderPedidos();
+      }
+    };
+
+    window.onload = () => {
+      fetchPedidos();
+      setInterval(fetchPedidos, 10000); // Atualiza a cada 10s
+    };
+  </script>
+
+  <style>
+    .destaque-pedido {
+      animation: piscar 1s ease-in-out infinite;
+    }
+
+    @keyframes piscar {
+      0%, 100% { background-color: #fff3cd; }
+      50% { background-color: #ffeeba; }
+    }
+  </style>
 </body>
 </html>
