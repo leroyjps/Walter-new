@@ -32,6 +32,7 @@
       <label for="status">Atualizar Status:</label>
       <select id="status" required>
         <option value="Liberado">Liberado</option>
+        <option value="Falta">Falta</option> <!-- Status "Falta" -->
         <option value="Não Liberado">Não Liberado</option>
       </select>
 
@@ -44,6 +45,9 @@
         <option value="Emerson">Emerson</option>
       </select>
 
+      <label for="comentario">Comentário:</label>
+      <textarea id="comentario" rows="4" placeholder="Adicione um comentário sobre o pedido" required></textarea>
+
       <button id="atualizarBtn">Atualizar Status</button>
 
       <h2>Pedidos Existentes</h2>
@@ -52,7 +56,7 @@
           <tr>
             <th>ID</th>
             <th>Item</th>
-            <th>Op</th> <!-- Coluna OP -->
+            <th>Op</th>
             <th>Quantidade</th>
             <th>Parceiro de Negócio</th>
             <th>Status</th>
@@ -132,7 +136,7 @@
         linha.innerHTML = `
           <td>${start + index + 1}</td>
           <td>${pedido.item}</td>
-          <td>${pedido.op}</td> <!-- Exibindo OP -->
+          <td>${pedido.op}</td>
           <td>${pedido.quantidade}</td>
           <td>${pedido.parceiro}</td>
           <td>${pedido.status}</td>
@@ -151,6 +155,7 @@
       const idTabela = parseInt(document.getElementById("pedidoId").value.trim());
       const novoStatus = document.getElementById("status").value;
       const nomeOperador = document.getElementById("operador").value.trim();
+      const comentario = document.getElementById("comentario").value.trim();
 
       if (!nomeOperador) {
         alert("Por favor, insira o nome do operador.");
@@ -173,7 +178,8 @@
         const pedidoDoc = doc(db, "pedidos", pedidos[indexPedido].id);
         const atualizacao = {
           status: novoStatus,
-          operador: nomeOperador
+          operador: nomeOperador,
+          comentario: comentario
         };
 
         if (novoStatus === "Liberado") {
@@ -189,7 +195,8 @@
           to_email: pedido.emailCriador,
           item: pedido.item,
           status: novoStatus,
-          operador: nomeOperador
+          operador: nomeOperador,
+          comentario: comentario // Envia o comentário por e-mail
         }).then(() => {
           console.log("Email enviado com sucesso!");
         }).catch((error) => {
