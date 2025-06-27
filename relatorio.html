@@ -138,6 +138,7 @@
         div.classList.add("pedido");
         div.innerHTML = `
           <p><strong>Item:</strong> ${p.item}</p>
+          <p><strong>OP:</strong> ${p.op}</p> <!-- Exibindo OP -->
           <p><strong>Quantidade:</strong> ${p.quantidade}</p>
           <p><strong>Parceiro:</strong> ${p.parceiro}</p>
           <p><strong>Status:</strong> ${p.status}</p>
@@ -179,6 +180,7 @@
 
         return {
           Item: p.item,
+          OP: p.op,  // Incluindo OP na exportação
           Quantidade: p.quantidade,
           Parceiro: p.parceiro,
           Status: p.status,
