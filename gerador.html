@@ -40,13 +40,10 @@
         <input type="hidden" id="pedidoFirebaseId" />
         <label for="item">Item:</label>
         <input type="text" id="item" required />
-          <label for="OP">OP:</label>
+        <label for="op">OP:</label>
         <input type="number" id="op" required />
-
-
         <label for="quantidade">Quantidade:</label>
         <input type="number" id="quantidade" required />
-
         <label for="parceiro">Parceiro de Negócio:</label>
         <select id="parceiro" required>
           <option value="">Selecione um parceiro</option>
@@ -58,7 +55,6 @@
           <option value="INDUTHERM">INDUTHERM</option>
           <option value="IMAC">IMAC</option>
         </select>
-
         <button type="submit" id="submitButton">Gerar Pedido</button>
         <button type="button" id="cancelarEdicao" style="display: none;">Cancelar Edição</button>
       </form>
@@ -162,7 +158,7 @@
       e.preventDefault();
 
       const item = document.getElementById("item").value;
-       const item = document.getElementById("op").value;
+      const op = document.getElementById("op").value;
       const quantidade = document.getElementById("quantidade").value;
       const parceiro = document.getElementById("parceiro").value;
       const id = document.getElementById("pedidoFirebaseId").value;
@@ -175,7 +171,7 @@
 
       const pedido = {
         item,
-        op,
+        op,  // Agora passando a variável op corretamente
         quantidade,
         parceiro,
         emailCriador: user.email,
@@ -220,6 +216,7 @@
         const linha = tabela.insertRow();
         linha.innerHTML = `
           <td>${pedido.item}</td>
+          <td>${pedido.op}</td>
           <td>${pedido.quantidade}</td>
           <td>${pedido.parceiro}</td>
           <td>${pedido.status}</td>
@@ -234,7 +231,7 @@
 
     window.editarPedido = (id, pedido) => {
       document.getElementById("item").value = pedido.item;
-        document.getElementById("op").value = pedido.op;
+      document.getElementById("op").value = pedido.op;
       document.getElementById("quantidade").value = pedido.quantidade;
       document.getElementById("parceiro").value = pedido.parceiro;
       document.getElementById("pedidoFirebaseId").value = id;
