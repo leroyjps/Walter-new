@@ -61,6 +61,7 @@
             <th>Quantidade</th>
             <th>Parceiro de Negócio</th>
             <th>Status</th>
+            <th>Comentário</th> <!-- Exibindo Comentário -->
             <th>Operador</th>
           </tr>
         </thead>
@@ -141,6 +142,7 @@
           <td>${pedido.quantidade}</td>
           <td>${pedido.parceiro}</td>
           <td>${pedido.status}</td>
+          <td>${pedido.comentario || "-"}</td> <!-- Exibindo Comentário -->
           <td>${pedido.operador || "-"}</td>
         `;
       });
@@ -161,9 +163,9 @@
       const pedido = pedidos.find(p => p.id === pedidoId);
       if (pedido) {
         // Exibe o comentário atual do pedido no campo de comentário
-        document.getElementById("comentario").value = pedido.comentario || "-";
+        document.getElementById("comentario").value = pedido.comentario || "";
       } else {
-        document.getElementById("comentario").value = "-";
+        document.getElementById("comentario").value = "";
       }
     });
 
