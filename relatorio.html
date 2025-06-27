@@ -143,6 +143,7 @@
           <p><strong>Parceiro:</strong> ${p.parceiro}</p>
           <p><strong>Status:</strong> ${p.status}</p>
           <p><strong>Operador:</strong> ${p.operador || "-"}</p>
+          <p><strong>Comentário:</strong> ${p.comentario || "-"}</p> <!-- Exibindo Comentário -->
           <p><strong>Data de Entrada:</strong> ${entrada.toLocaleString()}</p>
           <p><strong>Data de Liberação:</strong> ${liberacao ? liberacao.toLocaleString() : "-"}</p>
           <p><strong>Tempo Total:</strong> ${tempoDecorrido}</p>
@@ -185,6 +186,7 @@
           Parceiro: p.parceiro,
           Status: p.status,
           Operador: p.operador || "-",
+          Comentario: p.comentario || "-",  // Incluindo Comentário na exportação
           "Data de Entrada": entrada.toLocaleString(),
           "Data de Liberação": liberacao ? liberacao.toLocaleString() : "-",
           "Tempo Total": tempo
