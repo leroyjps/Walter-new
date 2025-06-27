@@ -53,6 +53,7 @@
           <tr>
             <th>ID</th>
             <th>Item</th>
+            <th>Op</th>
             <th>Quantidade</th>
             <th>Parceiro de Negócio</th>
             <th>Status</th>
@@ -132,6 +133,7 @@
       linha.innerHTML = `
         <td>${start + index + 1}</td>
         <td>${pedido.item}</td>
+        <td>${pedido.op}</td>
         <td>${pedido.quantidade}</td>
         <td>${pedido.parceiro}</td>
         <td>${pedido.status}</td>
