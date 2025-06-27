@@ -40,6 +40,9 @@
         <input type="hidden" id="pedidoFirebaseId" />
         <label for="item">Item:</label>
         <input type="text" id="item" required />
+          <label for="OP">OP:</label>
+        <input type="number" id="op" required />
+
 
         <label for="quantidade">Quantidade:</label>
         <input type="number" id="quantidade" required />
@@ -67,6 +70,7 @@
         <thead>
           <tr>
             <th>Item</th>
+            <th>OP</th>
             <th>Quantidade</th>
             <th>Parceiro</th>
             <th>Status</th>
@@ -158,6 +162,7 @@
       e.preventDefault();
 
       const item = document.getElementById("item").value;
+       const item = document.getElementById("op").value;
       const quantidade = document.getElementById("quantidade").value;
       const parceiro = document.getElementById("parceiro").value;
       const id = document.getElementById("pedidoFirebaseId").value;
@@ -170,6 +175,7 @@
 
       const pedido = {
         item,
+        op,
         quantidade,
         parceiro,
         emailCriador: user.email,
@@ -228,6 +234,7 @@
 
     window.editarPedido = (id, pedido) => {
       document.getElementById("item").value = pedido.item;
+        document.getElementById("op").value = pedido.op;
       document.getElementById("quantidade").value = pedido.quantidade;
       document.getElementById("parceiro").value = pedido.parceiro;
       document.getElementById("pedidoFirebaseId").value = id;
