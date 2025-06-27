@@ -32,7 +32,7 @@
       <label for="status">Atualizar Status:</label>
       <select id="status" required>
         <option value="Liberado">Liberado</option>
-        <option value="Falta">Falta</option> <!-- Status "Falta" -->
+        <option value="Falta">Falta</option>
         <option value="Não Liberado">Não Liberado</option>
       </select>
 
@@ -45,8 +45,11 @@
         <option value="Emerson">Emerson</option>
       </select>
 
-      <label for="comentario">Comentário:</label>
-      <textarea id="comentario" rows="4" placeholder="Adicione um comentário sobre o pedido" required></textarea>
+      <label for="comentario">Comentário Atual:</label>
+      <textarea id="comentarioVisualizacao" rows="4" readonly placeholder="Comentário atual do pedido"></textarea>
+
+      <label for="comentarioNovo">Novo Comentário (Opcional):</label>
+      <textarea id="comentarioNovo" rows="4" placeholder="Adicione um comentário sobre o pedido"></textarea>
 
       <button id="atualizarBtn">Atualizar Status</button>
 
@@ -151,11 +154,26 @@
         (start + itemsPerPage) >= pedidos.length;
     }
 
+    document.getElementById("pedidoId").addEventListener("input", async function () {
+      const pedidoId = parseInt(document.getElementById("pedidoId").value.trim());
+      if (isNaN(pedidoId)) {
+        return;
+      }
+
+      const pedido = pedidos.find(p => p.id === pedidoId);
+      if (pedido) {
+        // Exibe o comentário atual do pedido
+        document.getElementById("comentarioVisualizacao").value = pedido.comentario || "-";
+      } else {
+        document.getElementById("comentarioVisualizacao").value = "-";
+      }
+    });
+
     document.getElementById("atualizarBtn").onclick = async function () {
       const idTabela = parseInt(document.getElementById("pedidoId").value.trim());
       const novoStatus = document.getElementById("status").value;
       const nomeOperador = document.getElementById("operador").value.trim();
-      const comentario = document.getElementById("comentario").value.trim();
+      const comentarioNovo = document.getElementById("comentarioNovo").value.trim();
 
       if (!nomeOperador) {
         alert("Por favor, insira o nome do operador.");
@@ -179,7 +197,7 @@
         const atualizacao = {
           status: novoStatus,
           operador: nomeOperador,
-          comentario: comentario
+          comentario: comentarioNovo || pedidos[indexPedido].comentario // Atualiza o comentário
         };
 
         if (novoStatus === "Liberado") {
@@ -196,7 +214,7 @@
           item: pedido.item,
           status: novoStatus,
           operador: nomeOperador,
-          comentario: comentario // Envia o comentário por e-mail
+          comentario: comentarioNovo || pedido.comentario // Envia o comentário atualizado por e-mail
         }).then(() => {
           console.log("Email enviado com sucesso!");
         }).catch((error) => {
