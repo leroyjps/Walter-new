@@ -45,11 +45,9 @@
         <option value="Emerson">Emerson</option>
       </select>
 
-      <label for="comentario">Comentário Atual:</label>
-      <textarea id="comentarioVisualizacao" rows="4" readonly placeholder="Comentário atual do pedido"></textarea>
-
-      <label for="comentarioNovo">Novo Comentário (Opcional):</label>
-      <textarea id="comentarioNovo" rows="4" placeholder="Adicione um comentário sobre o pedido"></textarea>
+      <!-- Comentário único -->
+      <label for="comentario">Comentário:</label>
+      <textarea id="comentario" rows="4" placeholder="Adicione um comentário sobre o pedido" required></textarea>
 
       <button id="atualizarBtn">Atualizar Status</button>
 
@@ -162,10 +160,10 @@
 
       const pedido = pedidos.find(p => p.id === pedidoId);
       if (pedido) {
-        // Exibe o comentário atual do pedido
-        document.getElementById("comentarioVisualizacao").value = pedido.comentario || "-";
+        // Exibe o comentário atual do pedido no campo de comentário
+        document.getElementById("comentario").value = pedido.comentario || "-";
       } else {
-        document.getElementById("comentarioVisualizacao").value = "-";
+        document.getElementById("comentario").value = "-";
       }
     });
 
@@ -173,7 +171,7 @@
       const idTabela = parseInt(document.getElementById("pedidoId").value.trim());
       const novoStatus = document.getElementById("status").value;
       const nomeOperador = document.getElementById("operador").value.trim();
-      const comentarioNovo = document.getElementById("comentarioNovo").value.trim();
+      const comentarioNovo = document.getElementById("comentario").value.trim();
 
       if (!nomeOperador) {
         alert("Por favor, insira o nome do operador.");
@@ -197,7 +195,7 @@
         const atualizacao = {
           status: novoStatus,
           operador: nomeOperador,
-          comentario: comentarioNovo || pedidos[indexPedido].comentario // Atualiza o comentário
+          comentario: comentarioNovo // Atualiza o comentário
         };
 
         if (novoStatus === "Liberado") {
@@ -214,7 +212,7 @@
           item: pedido.item,
           status: novoStatus,
           operador: nomeOperador,
-          comentario: comentarioNovo || pedido.comentario // Envia o comentário atualizado por e-mail
+          comentario: comentarioNovo // Envia o comentário atualizado por e-mail
         }).then(() => {
           console.log("Email enviado com sucesso!");
         }).catch((error) => {
