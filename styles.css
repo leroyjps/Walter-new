@@ -187,9 +187,9 @@ footer p {
 }
 
 /* Responsividade para tabelas maiores */
-@media (max-width: 1500px) {
+@media (max-width: 1800px) {
   .responsive-iframe {
-    height: 700px;
+    height: 1000px;
   }
 }
 
