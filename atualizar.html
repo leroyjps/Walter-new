@@ -91,170 +91,159 @@
   </script>
 
   <script type="module">
- import {
-  getFirestore,
-  collection,
-  getDocs,
-  updateDoc,
-  addDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      updateDoc,
+      doc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// ... firebaseConfig e inicialização mantidos
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let pedidos = [];
-let currentPage = 1;
-const itemsPerPage = 10;
-
-// Função para registrar histórico
-async function registrarHistorico(pedidoId, dados, acao) {
-  try {
-    await addDoc(collection(db, "historicoPedidos"), {
-      pedidoId,
-      item: dados.item,
-      op: dados.op,
-      quantidade: dados.quantidade,
-      parceiro: dados.parceiro,
-      status: dados.status,
-      operador: dados.operador || "-",
-      comentario: dados.comentario || "-",
-      dataEtapa: new Date().toISOString(),
-      acao
-    });
-  } catch (error) {
-    console.error("Erro ao registrar histórico:", error);
-  }
-}
-
-async function buscarPedidos() {
-  try {
-    const querySnapshot = await getDocs(collection(db, "pedidos"));
-    pedidos = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      pedidos.push({ id: doc.id, ...data });
-    });
-    if (pedidos.length === 0) {
-      alert("Nenhum pedido foi encontrado.");
-    }
-    atualizarTabela();
-  } catch (e) {
-    console.error("Erro ao carregar pedidos:", e);
-  }
-}
-
-function atualizarTabela() {
-  const tbody = document.querySelector("#pedidoTable tbody");
-  tbody.innerHTML = "";
-
-  const start = (currentPage - 1) * itemsPerPage;
-  const pagePedidos = pedidos.slice(start, start + itemsPerPage);
-
-  pagePedidos.forEach((pedido, index) => {
-    const linha = tbody.insertRow();
-    linha.innerHTML = `
-      <td>${start + index + 1}</td>
-      <td>${pedido.item}</td>
-      <td>${pedido.op}</td>
-      <td>${pedido.quantidade}</td>
-      <td>${pedido.parceiro}</td>
-      <td>${pedido.status}</td>
-      <td>${pedido.comentario || "-"}</td>
-      <td>${pedido.operador || "-"}</td>
-    `;
-  });
-
-  document.getElementById("page-info").innerText =
-    `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
-  document.getElementById("prev-btn").disabled = currentPage === 1;
-  document.getElementById("next-btn").disabled =
-    (start + itemsPerPage) >= pedidos.length;
-}
-
-document.getElementById("pedidoId").addEventListener("input", function () {
-  const pedidoId = parseInt(document.getElementById("pedidoId").value.trim());
-  if (isNaN(pedidoId)) return;
-
-  const pedido = pedidos[(currentPage - 1) * itemsPerPage + (pedidoId - 1)];
-  if (pedido) {
-    document.getElementById("comentario").value = pedido.comentario || "";
-  } else {
-    document.getElementById("comentario").value = "";
-  }
-});
-
-document.getElementById("atualizarBtn").onclick = async function () {
-  const idTabela = parseInt(document.getElementById("pedidoId").value.trim());
-  const novoStatus = document.getElementById("status").value;
-  const nomeOperador = document.getElementById("operador").value.trim();
-  const comentarioNovo = document.getElementById("comentario").value.trim();
-
-  if (!nomeOperador) return alert("Por favor, insira o nome do operador.");
-  if (isNaN(idTabela) || idTabela <= 0) return alert("Informe um número de ID válido da tabela.");
-
-  const indexPedido = (currentPage - 1) * itemsPerPage + (idTabela - 1);
-  const pedidoOriginal = pedidos[indexPedido];
-  if (!pedidoOriginal) return alert("ID informado não corresponde a nenhum pedido listado.");
-
-  try {
-    const pedidoDoc = doc(db, "pedidos", pedidoOriginal.id);
-    const atualizacao = {
-      status: novoStatus,
-      operador: nomeOperador,
-      comentario: comentarioNovo
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.firebasestorage.app",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+      measurementId: "G-9PL8JP0SD4"
     };
 
-    if (novoStatus === "Liberado") {
-      atualizacao.dataLiberacao = new Date().toISOString();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let pedidos = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+    async function buscarPedidos() {
+      const querySnapshot = await getDocs(collection(db, "pedidos"));
+      pedidos = [];
+      querySnapshot.forEach((doc) => {
+        pedidos.push({ id: doc.id, ...doc.data() });
+      });
+      atualizarTabela();
     }
 
-    await updateDoc(pedidoDoc, atualizacao);
+    function atualizarTabela() {
+      const tbody = document.querySelector("#pedidoTable tbody");
+      tbody.innerHTML = "";
 
-    // Registrar histórico
-    await registrarHistorico(pedidoOriginal.id, {
-      ...pedidoOriginal,
-      ...atualizacao
-    }, "atualizado");
+      const start = (currentPage - 1) * itemsPerPage;
+      const pagePedidos = pedidos.slice(start, start + itemsPerPage);
 
-    // Enviar e-mail
-    emailjs.send("service_how3gpr", "template_nffl5al", {
-      to_email: pedidoOriginal.emailCriador,
-      item: pedidoOriginal.item,
-      status: novoStatus,
-      operador: nomeOperador,
-      comentario: comentarioNovo
-    }).then(() => {
-      console.log("Email enviado com sucesso!");
-    }).catch((error) => {
-      console.error("Erro ao enviar email:", error);
+      pagePedidos.forEach((pedido, index) => {
+        const linha = tbody.insertRow();
+        linha.innerHTML = `
+          <td>${start + index + 1}</td>
+          <td>${pedido.item}</td>
+          <td>${pedido.op}</td>
+          <td>${pedido.quantidade}</td>
+          <td>${pedido.parceiro}</td>
+          <td>${pedido.status}</td>
+          <td>${pedido.comentario || "-"}</td> <!-- Exibindo Comentário -->
+          <td>${pedido.operador || "-"}</td>
+        `;
+      });
+
+      document.getElementById("page-info").innerText =
+        `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
+      document.getElementById("prev-btn").disabled = currentPage === 1;
+      document.getElementById("next-btn").disabled =
+        (start + itemsPerPage) >= pedidos.length;
+    }
+
+    document.getElementById("pedidoId").addEventListener("input", async function () {
+      const pedidoId = parseInt(document.getElementById("pedidoId").value.trim());
+      if (isNaN(pedidoId)) {
+        return;
+      }
+
+      const pedido = pedidos.find(p => p.id === pedidoId);
+      if (pedido) {
+        // Exibe o comentário atual do pedido no campo de comentário
+        document.getElementById("comentario").value = pedido.comentario || "";
+      } else {
+        document.getElementById("comentario").value = "";
+      }
     });
 
-    alert("Status atualizado e histórico registrado!");
-    buscarPedidos();
-  } catch (error) {
-    console.error(error);
-    alert("Erro ao atualizar o status.");
-  }
-};
+    document.getElementById("atualizarBtn").onclick = async function () {
+      const idTabela = parseInt(document.getElementById("pedidoId").value.trim());
+      const novoStatus = document.getElementById("status").value;
+      const nomeOperador = document.getElementById("operador").value.trim();
+      const comentarioNovo = document.getElementById("comentario").value.trim();
 
-window.previousPage = () => {
-  if (currentPage > 1) {
-    currentPage--;
-    atualizarTabela();
-  }
-};
+      if (!nomeOperador) {
+        alert("Por favor, insira o nome do operador.");
+        return;
+      }
 
-window.nextPage = () => {
-  if (currentPage * itemsPerPage < pedidos.length) {
-    currentPage++;
-    atualizarTabela();
-  }
-};
+      if (isNaN(idTabela) || idTabela <= 0) {
+        alert("Informe um número de ID válido da tabela.");
+        return;
+      }
 
-window.onload = buscarPedidos;
+      const indexPedido = (currentPage - 1) * itemsPerPage + (idTabela - 1);
 
+      if (!pedidos[indexPedido]) {
+        alert("ID informado não corresponde a nenhum pedido listado.");
+        return;
+      }
+
+      try {
+        const pedidoDoc = doc(db, "pedidos", pedidos[indexPedido].id);
+        const atualizacao = {
+          status: novoStatus,
+          operador: nomeOperador,
+          comentario: comentarioNovo // Atualiza o comentário
+        };
+
+        if (novoStatus === "Liberado") {
+          atualizacao.dataLiberacao = new Date().toISOString();
+        }
+
+        await updateDoc(pedidoDoc, atualizacao);
+
+        // Envia e-mail via EmailJS
+        const pedido = pedidos[indexPedido];
+
+        emailjs.send("service_how3gpr", "template_nffl5al", {
+          to_email: pedido.emailCriador,
+          item: pedido.item,
+          status: novoStatus,
+          operador: nomeOperador,
+          comentario: comentarioNovo // Envia o comentário atualizado por e-mail
+        }).then(() => {
+          console.log("Email enviado com sucesso!");
+        }).catch((error) => {
+          console.error("Erro ao enviar email:", error);
+        });
+
+        alert("Status atualizado com sucesso!");
+        buscarPedidos();
+      } catch (error) {
+        console.error(error);
+        alert("Erro ao atualizar o status.");
+      }
+    };
+
+    window.previousPage = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        atualizarTabela();
+      }
+    };
+
+    window.nextPage = () => {
+      if (currentPage * itemsPerPage < pedidos.length) {
+        currentPage++;
+        atualizarTabela();
+      }
+    };
+
+    window.onload = buscarPedidos;
   </script>
 </body>
 </html>
