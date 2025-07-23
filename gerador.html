@@ -93,170 +93,189 @@
   </footer>
 
   <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      getDocs,
-      doc,
-      updateDoc,
-      deleteDoc
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+<!-- ... HTML até <script type="module"> permanece o mesmo ... -->
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
-      authDomain: "walterscheid-estoque.firebaseapp.com",
-      projectId: "walterscheid-estoque",
-      storageBucket: "walterscheid-estoque.firebasestorage.app",
-      messagingSenderId: "487386736937",
-      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
-      measurementId: "G-9PL8JP0SD4"
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    doc,
+    updateDoc,
+    deleteDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+    authDomain: "walterscheid-estoque.firebaseapp.com",
+    projectId: "walterscheid-estoque",
+    storageBucket: "walterscheid-estoque.firebasestorage.app",
+    messagingSenderId: "487386736937",
+    appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+    measurementId: "G-9PL8JP0SD4"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  const form = document.getElementById("pedidoForm");
+  const tabela = document.querySelector("#pedidoTable tbody");
+  const btnCancelar = document.getElementById("cancelarEdicao");
+  const btnSubmit = document.getElementById("submitButton");
+
+  async function registrarHistorico(pedidoId, dados, acao) {
+    try {
+      await addDoc(collection(db, "historicoPedidos"), {
+        pedidoId,
+        item: dados.item,
+        op: dados.op,
+        quantidade: dados.quantidade,
+        parceiro: dados.parceiro,
+        status: dados.status,
+        operador: dados.operador || "-",
+        comentario: dados.comentario || "-",
+        dataEtapa: new Date().toISOString(),
+        acao
+      });
+    } catch (error) {
+      console.error("Erro ao registrar histórico:", error);
+    }
+  }
+
+  document.getElementById("loginForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => alert("Login realizado!"))
+      .catch((error) => alert("Erro ao fazer login: " + error.message));
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    signOut(auth);
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      document.getElementById("auth-section").style.display = "block";
+      document.getElementById("logoutBtn").style.display = "inline";
+      document.getElementById("usuarioLogado").innerText = `Logado como: ${user.email}`;
+    } else {
+      document.getElementById("usuarioLogado").innerText = "Não autenticado";
+    }
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const item = document.getElementById("item").value;
+    const op = document.getElementById("op").value;
+    const quantidade = document.getElementById("quantidade").value;
+    const parceiro = document.getElementById("parceiro").value;
+    const id = document.getElementById("pedidoFirebaseId").value;
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Usuário não autenticado.");
+      return;
+    }
+
+    const pedido = {
+      item,
+      op,
+      quantidade,
+      parceiro,
+      emailCriador: user.email,
+      status: "Não Liberado",
+      dataEntrada: new Date().toISOString(),
+      dataLiberacao: null
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-
-    const form = document.getElementById("pedidoForm");
-    const tabela = document.querySelector("#pedidoTable tbody");
-    const btnCancelar = document.getElementById("cancelarEdicao");
-    const btnSubmit = document.getElementById("submitButton");
-
-    document.getElementById("loginForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const email = document.getElementById("loginEmail").value;
-      const password = document.getElementById("loginPassword").value;
-
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          alert("Login realizado!");
-        })
-        .catch((error) => {
-          alert("Erro ao fazer login: " + error.message);
-        });
-    });
-
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      signOut(auth);
-    });
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        document.getElementById("auth-section").style.display = "block";
-        document.getElementById("logoutBtn").style.display = "inline";
-        document.getElementById("usuarioLogado").innerText = `Logado como: ${user.email}`;
+    try {
+      if (id) {
+        await updateDoc(doc(db, "pedidos", id), pedido);
+        alert("Pedido atualizado com sucesso!");
       } else {
-        document.getElementById("usuarioLogado").innerText = "Não autenticado";
+        const docRef = await addDoc(collection(db, "pedidos"), pedido);
+        await registrarHistorico(docRef.id, pedido, "criado");
+        alert("Pedido gerado com sucesso!");
       }
+
+      form.reset();
+      btnCancelar.style.display = "none";
+      btnSubmit.innerText = "Gerar Pedido";
+      document.getElementById("pedidoFirebaseId").value = "";
+      carregarPedidos();
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao salvar pedido.");
+    }
+  });
+
+  btnCancelar.onclick = () => {
+    form.reset();
+    document.getElementById("pedidoFirebaseId").value = "";
+    btnCancelar.style.display = "none";
+    btnSubmit.innerText = "Gerar Pedido";
+  };
+
+  async function carregarPedidos() {
+    const querySnapshot = await getDocs(collection(db, "pedidos"));
+    tabela.innerHTML = "";
+
+    querySnapshot.forEach((docSnap) => {
+      const pedido = docSnap.data();
+      const linha = tabela.insertRow();
+      linha.innerHTML = `
+        <td>${pedido.item}</td>
+        <td>${pedido.op}</td>
+        <td>${pedido.quantidade}</td>
+        <td>${pedido.parceiro}</td>
+        <td>${pedido.status}</td>
+        <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
+        <td>
+          <button onclick="editarPedido('${docSnap.id}', ${JSON.stringify(pedido).replace(/"/g, '&quot;')})">Editar</button>
+          <button onclick="excluirPedido('${docSnap.id}')">Excluir</button>
+        </td>
+      `;
     });
+  }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+  window.editarPedido = (id, pedido) => {
+    document.getElementById("item").value = pedido.item;
+    document.getElementById("op").value = pedido.op;
+    document.getElementById("quantidade").value = pedido.quantidade;
+    document.getElementById("parceiro").value = pedido.parceiro;
+    document.getElementById("pedidoFirebaseId").value = id;
+    btnSubmit.innerText = "Atualizar Pedido";
+    btnCancelar.style.display = "inline";
+  };
 
-      const item = document.getElementById("item").value;
-      const op = document.getElementById("op").value;
-      const quantidade = document.getElementById("quantidade").value;
-      const parceiro = document.getElementById("parceiro").value;
-      const id = document.getElementById("pedidoFirebaseId").value;
-
-      const user = auth.currentUser;
-      if (!user) {
-        alert("Usuário não autenticado.");
-        return;
-      }
-
-      const pedido = {
-        item,
-        op,  // Agora passando a variável op corretamente
-        quantidade,
-        parceiro,
-        emailCriador: user.email,
-        status: "Não Liberado",
-        dataEntrada: new Date().toISOString(),
-        dataLiberacao: null
-      };
-
+  window.excluirPedido = async (id) => {
+    if (confirm("Tem certeza que deseja excluir este pedido?")) {
       try {
-        if (id) {
-          await updateDoc(doc(db, "pedidos", id), pedido);
-          alert("Pedido atualizado com sucesso!");
-        } else {
-          await addDoc(collection(db, "pedidos"), pedido);
-          alert("Pedido gerado com sucesso!");
-        }
-
-        form.reset();
-        btnCancelar.style.display = "none";
-        btnSubmit.innerText = "Gerar Pedido";
-        document.getElementById("pedidoFirebaseId").value = "";
+        await deleteDoc(doc(db, "pedidos", id));
+        alert("Pedido excluído com sucesso!");
         carregarPedidos();
       } catch (error) {
         console.error(error);
-        alert("Erro ao salvar pedido.");
+        alert("Erro ao excluir pedido.");
       }
-    });
-
-    btnCancelar.onclick = () => {
-      form.reset();
-      document.getElementById("pedidoFirebaseId").value = "";
-      btnCancelar.style.display = "none";
-      btnSubmit.innerText = "Gerar Pedido";
-    };
-
-    async function carregarPedidos() {
-      const querySnapshot = await getDocs(collection(db, "pedidos"));
-      tabela.innerHTML = "";
-
-      querySnapshot.forEach((docSnap) => {
-        const pedido = docSnap.data();
-        const linha = tabela.insertRow();
-        linha.innerHTML = `
-          <td>${pedido.item}</td>
-          <td>${pedido.op}</td>
-          <td>${pedido.quantidade}</td>
-          <td>${pedido.parceiro}</td>
-          <td>${pedido.status}</td>
-          <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
-          <td>
-            <button onclick="editarPedido('${docSnap.id}', ${JSON.stringify(pedido).replace(/"/g, '&quot;')})">Editar</button>
-            <button onclick="excluirPedido('${docSnap.id}')">Excluir</button>
-          </td>
-        `;
-      });
     }
+  };
 
-    window.editarPedido = (id, pedido) => {
-      document.getElementById("item").value = pedido.item;
-      document.getElementById("op").value = pedido.op;
-      document.getElementById("quantidade").value = pedido.quantidade;
-      document.getElementById("parceiro").value = pedido.parceiro;
-      document.getElementById("pedidoFirebaseId").value = id;
-      btnSubmit.innerText = "Atualizar Pedido";
-      btnCancelar.style.display = "inline";
-    };
+  window.onload = carregarPedidos;
+</script>
 
-    window.excluirPedido = async (id) => {
-      if (confirm("Tem certeza que deseja excluir este pedido?")) {
-        try {
-          await deleteDoc(doc(db, "pedidos", id));
-          alert("Pedido excluído com sucesso!");
-          carregarPedidos();
-        } catch (error) {
-          console.error(error);
-          alert("Erro ao excluir pedido.");
-        }
-      }
-    };
-
-    window.onload = carregarPedidos;
-  </script>
 </body>
 </html>
