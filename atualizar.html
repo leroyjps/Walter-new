@@ -129,12 +129,20 @@ async function registrarHistorico(pedidoId, dados, acao) {
 }
 
 async function buscarPedidos() {
-  const querySnapshot = await getDocs(collection(db, "pedidos"));
-  pedidos = [];
-  querySnapshot.forEach((doc) => {
-    pedidos.push({ id: doc.id, ...doc.data() });
-  });
-  atualizarTabela();
+  try {
+    const querySnapshot = await getDocs(collection(db, "pedidos"));
+    pedidos = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      pedidos.push({ id: doc.id, ...data });
+    });
+    if (pedidos.length === 0) {
+      alert("Nenhum pedido foi encontrado.");
+    }
+    atualizarTabela();
+  } catch (e) {
+    console.error("Erro ao carregar pedidos:", e);
+  }
 }
 
 function atualizarTabela() {
