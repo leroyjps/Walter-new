@@ -63,9 +63,16 @@
 
  <!-- ... cabeçalho e layout mantidos iguais até o script ... -->
 
+<!-- Cabeçalho e layout HTML mantidos iguais até a parte do script -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import {
+    getFirestore,
+    collection,
+    getDocs,
+    query,
+    orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
@@ -73,8 +80,7 @@
     projectId: "walterscheid-estoque",
     storageBucket: "walterscheid-estoque.firebasestorage.app",
     messagingSenderId: "487386736937",
-    appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
-    measurementId: "G-9PL8JP0SD4"
+    appId: "1:487386736937:web:4be50b32bb7fe90f552f38"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -86,13 +92,20 @@
   const itemsPerPage = 10;
 
   async function fetchPedidos() {
-    const q = query(collection(db, "historicoPedidos"), orderBy("dataEtapa", "desc"));
-    const querySnapshot = await getDocs(q);
-    pedidos = [];
-    querySnapshot.forEach((doc) => {
-      pedidos.push({ id: doc.id, ...doc.data() });
-    });
-    aplicarFiltros();
+    try {
+      const q = query(collection(db, "historicoPedidos"), orderBy("dataEtapa", "desc"));
+      const querySnapshot = await getDocs(q);
+      pedidos = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.item && data.status) {
+          pedidos.push({ id: doc.id, ...data });
+        }
+      });
+      aplicarFiltros();
+    } catch (e) {
+      console.error("Erro ao buscar dados:", e);
+    }
   }
 
   function aplicarFiltros() {
@@ -104,14 +117,14 @@
     const dataFim = document.getElementById("dataFim").value;
 
     pedidosFiltrados = pedidos.filter(p => {
-      const data = new Date(p.dataEtapa);
+      const data = new Date(p.dataEtapa || p.dataEntrada || new Date());
       const dentroData =
         (!dataInicio || data >= new Date(dataInicio)) &&
         (!dataFim || data <= new Date(dataFim + "T23:59:59"));
 
       return (
-        (!item || p.item.toLowerCase().includes(item)) &&
-        (!parceiro || p.parceiro.toLowerCase().includes(parceiro)) &&
+        (!item || p.item?.toLowerCase().includes(item)) &&
+        (!parceiro || p.parceiro?.toLowerCase().includes(parceiro)) &&
         (!status || p.status === status) &&
         (!operador || (p.operador || "").toLowerCase().includes(operador)) &&
         dentroData
@@ -130,18 +143,18 @@
     const pagePedidos = pedidosFiltrados.slice(start, start + itemsPerPage);
 
     pagePedidos.forEach(p => {
-      const dataEtapa = new Date(p.dataEtapa);
+      const dataEtapa = new Date(p.dataEtapa || p.dataEntrada);
       const div = document.createElement("div");
       div.classList.add("pedido");
       div.innerHTML = `
         <p><strong>Item:</strong> ${p.item}</p>
-        <p><strong>OP:</strong> ${p.op}</p>
-        <p><strong>Quantidade:</strong> ${p.quantidade}</p>
-        <p><strong>Parceiro:</strong> ${p.parceiro}</p>
+        <p><strong>OP:</strong> ${p.op || "-"}</p>
+        <p><strong>Quantidade:</strong> ${p.quantidade || "-"}</p>
+        <p><strong>Parceiro:</strong> ${p.parceiro || "-"}</p>
         <p><strong>Status:</strong> ${p.status}</p>
         <p><strong>Operador:</strong> ${p.operador || "-"}</p>
         <p><strong>Comentário:</strong> ${p.comentario || "-"}</p>
-        <p><strong>Ação:</strong> ${p.acao}</p>
+        <p><strong>Ação:</strong> ${p.acao || "-"}</p>
         <p><strong>Data da Etapa:</strong> ${dataEtapa.toLocaleString()}</p>
         <hr />
       `;
@@ -155,48 +168,24 @@
       start + itemsPerPage >= pedidosFiltrados.length;
   }
 
-  function previousPage() {
+  window.previousPage = () => {
     if (currentPage > 1) {
       currentPage--;
       renderRelatorio();
     }
-  }
+  };
 
-  function nextPage() {
+  window.nextPage = () => {
     if (currentPage * itemsPerPage < pedidosFiltrados.length) {
       currentPage++;
       renderRelatorio();
     }
-  }
+  };
 
-  function exportarExcel() {
-    const data = pedidosFiltrados.map(p => {
-      const dataEtapa = new Date(p.dataEtapa);
-      return {
-        Item: p.item,
-        OP: p.op,
-        Quantidade: p.quantidade,
-        Parceiro: p.parceiro,
-        Status: p.status,
-        Operador: p.operador || "-",
-        Comentario: p.comentario || "-",
-        Ação: p.acao,
-        "Data da Etapa": dataEtapa.toLocaleString()
-      };
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Relatorio");
-
-    XLSX.writeFile(workbook, "relatorio_pedidos.xlsx");
-  }
+  window.aplicarFiltros = aplicarFiltros;
 
   window.onload = fetchPedidos;
-  window.previousPage = previousPage;
-  window.nextPage = nextPage;
-  window.aplicarFiltros = aplicarFiltros;
-  window.exportarExcel = exportarExcel;
 </script>
+
 </body>
 </html>
