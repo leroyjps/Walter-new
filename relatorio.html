@@ -61,131 +61,150 @@
   <!-- SheetJS para exportar Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
- <!-- ... cabeçalho e layout mantidos iguais até o script ... -->
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-<!-- Cabeçalho e layout HTML mantidos iguais até a parte do script -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    getDocs,
-    query,
-    orderBy
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.firebasestorage.app",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+      measurementId: "G-9PL8JP0SD4"
+    };
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
-    authDomain: "walterscheid-estoque.firebaseapp.com",
-    projectId: "walterscheid-estoque",
-    storageBucket: "walterscheid-estoque.firebasestorage.app",
-    messagingSenderId: "487386736937",
-    appId: "1:487386736937:web:4be50b32bb7fe90f552f38"
-  };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    let pedidos = [];
+    let pedidosFiltrados = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
 
-  let pedidos = [];
-  let pedidosFiltrados = [];
-  let currentPage = 1;
-  const itemsPerPage = 10;
-
-  async function fetchPedidos() {
-    try {
-      const q = query(collection(db, "historicoPedidos"), orderBy("dataEtapa", "desc"));
-      const querySnapshot = await getDocs(q);
+    async function fetchPedidos() {
+      const querySnapshot = await getDocs(collection(db, "pedidos"));
       pedidos = [];
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.item && data.status) {
-          pedidos.push({ id: doc.id, ...data });
-        }
+        pedidos.push({ id: doc.id, ...doc.data() });
       });
       aplicarFiltros();
-    } catch (e) {
-      console.error("Erro ao buscar dados:", e);
     }
-  }
 
-  function aplicarFiltros() {
-    const item = document.getElementById("filtroItem").value.toLowerCase();
-    const parceiro = document.getElementById("filtroParceiro").value.toLowerCase();
-    const status = document.getElementById("filtroStatus").value;
-    const operador = document.getElementById("filtroOperador").value.toLowerCase();
-    const dataInicio = document.getElementById("dataInicio").value;
-    const dataFim = document.getElementById("dataFim").value;
+    function aplicarFiltros() {
+      const item = document.getElementById("filtroItem").value.toLowerCase();
+      const parceiro = document.getElementById("filtroParceiro").value.toLowerCase();
+      const status = document.getElementById("filtroStatus").value;
+      const operador = document.getElementById("filtroOperador").value.toLowerCase();
+      const dataInicio = document.getElementById("dataInicio").value;
+      const dataFim = document.getElementById("dataFim").value;
 
-    pedidosFiltrados = pedidos.filter(p => {
-      const data = new Date(p.dataEtapa || p.dataEntrada || new Date());
-      const dentroData =
-        (!dataInicio || data >= new Date(dataInicio)) &&
-        (!dataFim || data <= new Date(dataFim + "T23:59:59"));
+      pedidosFiltrados = pedidos.filter(p => {
+        const data = new Date(p.dataEntrada);
+        const dentroData =
+          (!dataInicio || data >= new Date(dataInicio)) &&
+          (!dataFim || data <= new Date(dataFim + "T23:59:59"));
 
-      return (
-        (!item || p.item?.toLowerCase().includes(item)) &&
-        (!parceiro || p.parceiro?.toLowerCase().includes(parceiro)) &&
-        (!status || p.status === status) &&
-        (!operador || (p.operador || "").toLowerCase().includes(operador)) &&
-        dentroData
-      );
-    });
+        return (
+          (!item || p.item.toLowerCase().includes(item)) &&
+          (!parceiro || p.parceiro.toLowerCase().includes(parceiro)) &&
+          (!status || p.status === status) &&
+          (!operador || (p.operador || "").toLowerCase().includes(operador)) &&
+          dentroData
+        );
+      });
 
-    currentPage = 1;
-    renderRelatorio();
-  }
-
-  function renderRelatorio() {
-    const container = document.getElementById("relatorioContainer");
-    container.innerHTML = "";
-
-    const start = (currentPage - 1) * itemsPerPage;
-    const pagePedidos = pedidosFiltrados.slice(start, start + itemsPerPage);
-
-    pagePedidos.forEach(p => {
-      const dataEtapa = new Date(p.dataEtapa || p.dataEntrada);
-      const div = document.createElement("div");
-      div.classList.add("pedido");
-      div.innerHTML = `
-        <p><strong>Item:</strong> ${p.item}</p>
-        <p><strong>OP:</strong> ${p.op || "-"}</p>
-        <p><strong>Quantidade:</strong> ${p.quantidade || "-"}</p>
-        <p><strong>Parceiro:</strong> ${p.parceiro || "-"}</p>
-        <p><strong>Status:</strong> ${p.status}</p>
-        <p><strong>Operador:</strong> ${p.operador || "-"}</p>
-        <p><strong>Comentário:</strong> ${p.comentario || "-"}</p>
-        <p><strong>Ação:</strong> ${p.acao || "-"}</p>
-        <p><strong>Data da Etapa:</strong> ${dataEtapa.toLocaleString()}</p>
-        <hr />
-      `;
-      container.appendChild(div);
-    });
-
-    document.getElementById("page-info").innerText =
-      `Página ${currentPage} de ${Math.ceil(pedidosFiltrados.length / itemsPerPage)}`;
-    document.getElementById("prev-btn").disabled = currentPage === 1;
-    document.getElementById("next-btn").disabled =
-      start + itemsPerPage >= pedidosFiltrados.length;
-  }
-
-  window.previousPage = () => {
-    if (currentPage > 1) {
-      currentPage--;
+      currentPage = 1;
       renderRelatorio();
     }
-  };
 
-  window.nextPage = () => {
-    if (currentPage * itemsPerPage < pedidosFiltrados.length) {
-      currentPage++;
-      renderRelatorio();
+    function renderRelatorio() {
+      const container = document.getElementById("relatorioContainer");
+      container.innerHTML = "";
+
+      const start = (currentPage - 1) * itemsPerPage;
+      const pagePedidos = pedidosFiltrados.slice(start, start + itemsPerPage);
+
+      pagePedidos.forEach(p => {
+        const entrada = new Date(p.dataEntrada);
+        const liberacao = p.dataLiberacao ? new Date(p.dataLiberacao) : null;
+        const tempoDecorrido = liberacao
+          ? `${Math.round((liberacao - entrada) / 60000)} min`
+          : "-";
+
+        const div = document.createElement("div");
+        div.classList.add("pedido");
+        div.innerHTML = `
+          <p><strong>Item:</strong> ${p.item}</p>
+          <p><strong>OP:</strong> ${p.op}</p> <!-- Exibindo OP -->
+          <p><strong>Quantidade:</strong> ${p.quantidade}</p>
+          <p><strong>Parceiro:</strong> ${p.parceiro}</p>
+          <p><strong>Status:</strong> ${p.status}</p>
+          <p><strong>Operador:</strong> ${p.operador || "-"}</p>
+          <p><strong>Comentário:</strong> ${p.comentario || "-"}</p> <!-- Exibindo Comentário -->
+          <p><strong>Data de Entrada:</strong> ${entrada.toLocaleString()}</p>
+          <p><strong>Data de Liberação:</strong> ${liberacao ? liberacao.toLocaleString() : "-"}</p>
+          <p><strong>Tempo Total:</strong> ${tempoDecorrido}</p>
+          <hr />
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById("page-info").innerText =
+        `Página ${currentPage} de ${Math.ceil(pedidosFiltrados.length / itemsPerPage)}`;
+      document.getElementById("prev-btn").disabled = currentPage === 1;
+      document.getElementById("next-btn").disabled =
+        start + itemsPerPage >= pedidosFiltrados.length;
     }
-  };
 
-  window.aplicarFiltros = aplicarFiltros;
+    function previousPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderRelatorio();
+      }
+    }
 
-  window.onload = fetchPedidos;
-</script>
+    function nextPage() {
+      if (currentPage * itemsPerPage < pedidosFiltrados.length) {
+        currentPage++;
+        renderRelatorio();
+      }
+    }
 
+    function exportarExcel() {
+      const data = pedidosFiltrados.map(p => {
+        const entrada = new Date(p.dataEntrada);
+        const liberacao = p.dataLiberacao ? new Date(p.dataLiberacao) : null;
+        const tempo = liberacao ? `${Math.round((liberacao - entrada) / 60000)} min` : "-";
+
+        return {
+          Item: p.item,
+          OP: p.op,  // Incluindo OP na exportação
+          Quantidade: p.quantidade,
+          Parceiro: p.parceiro,
+          Status: p.status,
+          Operador: p.operador || "-",
+          Comentario: p.comentario || "-",  // Incluindo Comentário na exportação
+          "Data de Entrada": entrada.toLocaleString(),
+          "Data de Liberação": liberacao ? liberacao.toLocaleString() : "-",
+          "Tempo Total": tempo
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Relatorio");
+
+      XLSX.writeFile(workbook, "relatorio_pedidos.xlsx");
+    }
+
+    window.onload = fetchPedidos;
+    window.previousPage = previousPage;
+    window.nextPage = nextPage;
+    window.aplicarFiltros = aplicarFiltros;
+    window.exportarExcel = exportarExcel;
+  </script>
 </body>
 </html>
