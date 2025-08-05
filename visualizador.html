@@ -25,16 +25,33 @@
   <main>
     <section class="visualizador-section">
       <h1>Visualizar Pedidos</h1>
+      
+      <div class="filtros">
+        <input type="text" id="filtroId" placeholder="Filtrar por ID">
+        <input type="text" id="filtroItem" placeholder="Filtrar por Item">
+        <input type="text" id="filtroOp" placeholder="Filtrar por OP">
+        <select id="filtroStatus">
+          <option value="">Todos status</option>
+          <option value="Não Liberado">Não Liberado</option>
+          <option value="Liberado">Liberado</option>
+          <option value="Em Produção">Em Produção</option>
+          <option value="Concluído">Concluído</option>
+        </select>
+        <button onclick="aplicarFiltros()">Filtrar</button>
+        <button onclick="limparFiltros()">Limpar</button>
+      </div>
+      
       <table id="pedidoTable">
         <thead>
           <tr>
             <th>ID</th>
             <th>Item</th>
-            <th>Op</th> <!-- Adicionando a coluna OP -->
+            <th>OP</th>
             <th>Quantidade</th>
-            <th>Parceiro de Negócio</th>
+            <th>Parceiro</th>
             <th>Status</th>
             <th>Data de Entrada</th>
+            <th>Operador</th>
           </tr>
         </thead>
         <tbody>
@@ -67,14 +84,15 @@
       collection,
       getDocs,
       query,
-      orderBy
+      orderBy,
+      where
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
       authDomain: "walterscheid-estoque.firebaseapp.com",
       projectId: "walterscheid-estoque",
-      storageBucket: "walterscheid-estoque.firebasestorage.app",
+      storageBucket: "walterscheid-estoque.appspot.com",
       messagingSenderId: "487386736937",
       appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
       measurementId: "G-9PL8JP0SD4"
@@ -84,23 +102,37 @@
     const db = getFirestore(app);
 
     let pedidos = [];
+    let pedidosFiltrados = [];
     let currentPage = 1;
     const itemsPerPage = 10;
     let ultimoPedidoId = null;
     let pedidoDestaqueId = null;
+    let filtrosAtivos = false;
 
     async function fetchPedidos() {
-      const q = query(collection(db, "pedidos"), orderBy("dataEntrada", "desc"));
+      let q;
+      if (filtrosAtivos) {
+        // Se há filtros ativos, não precisamos buscar novamente
+        return;
+      } else {
+        q = query(collection(db, "pedidos"), orderBy("pedidoId", "desc"));
+      }
+      
       const querySnapshot = await getDocs(q);
       const novosPedidos = [];
 
       querySnapshot.forEach((doc) => {
-        novosPedidos.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        novosPedidos.push({ 
+          id: doc.id, 
+          pedidoId: data.pedidoId || 'N/A',
+          ...data 
+        });
       });
 
       // Detecta novo pedido
-      const novoDetectado = pedidos.length > 0 && novosPedidos.length > 0 && novosPedidos[0].id !== pedidos[0].id;
-      if (novoDetectado) {
+      if (pedidos.length > 0 && novosPedidos.length > 0 && 
+          (novosPedidos[0].pedidoId !== pedidos[0].pedidoId || novosPedidos.length > pedidos.length)) {
         pedidoDestaqueId = novosPedidos[0].id;
         document.getElementById("notificacaoAudio").play();
         setTimeout(() => {
@@ -110,6 +142,45 @@
       }
 
       pedidos = novosPedidos;
+      if (!filtrosAtivos) {
+        pedidosFiltrados = [...pedidos];
+      }
+      renderPedidos();
+    }
+
+    function aplicarFiltros() {
+      const filtroId = document.getElementById("filtroId").value.toLowerCase();
+      const filtroItem = document.getElementById("filtroItem").value.toLowerCase();
+      const filtroOp = document.getElementById("filtroOp").value.toLowerCase();
+      const filtroStatus = document.getElementById("filtroStatus").value;
+
+      pedidosFiltrados = pedidos.filter(pedido => {
+        const matchId = filtroId === '' || 
+                        (pedido.pedidoId && pedido.pedidoId.toString().includes(filtroId));
+        const matchItem = filtroItem === '' || 
+                         (pedido.item && pedido.item.toLowerCase().includes(filtroItem));
+        const matchOp = filtroOp === '' || 
+                       (pedido.op && pedido.op.toString().includes(filtroOp));
+        const matchStatus = filtroStatus === '' || 
+                           (pedido.status && pedido.status === filtroStatus);
+
+        return matchId && matchItem && matchOp && matchStatus;
+      });
+
+      filtrosAtivos = filtroId !== '' || filtroItem !== '' || filtroOp !== '' || filtroStatus !== '';
+      currentPage = 1;
+      renderPedidos();
+    }
+
+    function limparFiltros() {
+      document.getElementById("filtroId").value = '';
+      document.getElementById("filtroItem").value = '';
+      document.getElementById("filtroOp").value = '';
+      document.getElementById("filtroStatus").value = '';
+      
+      pedidosFiltrados = [...pedidos];
+      filtrosAtivos = false;
+      currentPage = 1;
       renderPedidos();
     }
 
@@ -119,30 +190,36 @@
 
       const start = (currentPage - 1) * itemsPerPage;
       const end = start + itemsPerPage;
-      const pagePedidos = pedidos.slice(start, end);
+      const pagePedidos = pedidosFiltrados.slice(start, end);
 
-      pagePedidos.forEach((pedido, index) => {
+      pagePedidos.forEach((pedido) => {
         const linha = tabela.insertRow();
         if (pedido.id === pedidoDestaqueId) {
-          linha.style.backgroundColor = "#fff3cd"; // fundo amarelo claro
+          linha.style.backgroundColor = "#fff3cd";
           linha.style.fontWeight = "bold";
           linha.classList.add("destaque-pedido");
         }
+        
+        // Formata a data para exibição
+        const dataEntrada = pedido.dataEntrada ? 
+          new Date(pedido.dataEntrada).toLocaleString('pt-BR') : 'N/A';
+        
         linha.innerHTML = `
-          <td>${start + index + 1}</td>
-          <td>${pedido.item}</td>
-          <td>${pedido.op}</td> <!-- Exibindo a OP -->
-          <td>${pedido.quantidade}</td>
-          <td>${pedido.parceiro}</td>
-          <td>${pedido.status}</td>
-          <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
+          <td>${pedido.pedidoId || 'N/A'}</td>
+          <td>${pedido.item || 'N/A'}</td>
+          <td>${pedido.op || 'N/A'}</td>
+          <td>${pedido.quantidade || 'N/A'}</td>
+          <td>${pedido.parceiro || 'N/A'}</td>
+          <td>${pedido.status || 'N/A'}</td>
+          <td>${dataEntrada}</td>
+          <td>${pedido.operador || 'N/A'}</td>
         `;
       });
 
       document.getElementById("page-info").innerText =
-        `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
+        `Página ${currentPage} de ${Math.ceil(pedidosFiltrados.length / itemsPerPage)}`;
       document.getElementById("prev-btn").disabled = currentPage === 1;
-      document.getElementById("next-btn").disabled = end >= pedidos.length;
+      document.getElementById("next-btn").disabled = end >= pedidosFiltrados.length;
     }
 
     window.previousPage = () => {
@@ -153,7 +230,7 @@
     };
 
     window.nextPage = () => {
-      if (currentPage * itemsPerPage < pedidos.length) {
+      if (currentPage * itemsPerPage < pedidosFiltrados.length) {
         currentPage++;
         renderPedidos();
       }
@@ -162,6 +239,17 @@
     window.onload = () => {
       fetchPedidos();
       setInterval(fetchPedidos, 10000); // Atualiza a cada 10s
+      
+      // Adiciona eventos para filtrar ao pressionar Enter
+      document.getElementById("filtroId").addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') aplicarFiltros();
+      });
+      document.getElementById("filtroItem").addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') aplicarFiltros();
+      });
+      document.getElementById("filtroOp").addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') aplicarFiltros();
+      });
     };
   </script>
 
@@ -173,6 +261,33 @@
     @keyframes piscar {
       0%, 100% { background-color: #fff3cd; }
       50% { background-color: #ffeeba; }
+    }
+    
+    .filtros {
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .filtros input, .filtros select {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .filtros button {
+      padding: 8px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .filtros button:hover {
+      background-color: #45a049;
     }
   </style>
 </body>
