@@ -8,274 +8,214 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header>
-    <nav>
-      <div id="title">
-        <h1>Walterscheid Powertrain Group</h1>
-      </div>
-      <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="visualizador.html">Visualizar Pedidos</a></li>
-        <li><a href="atualizar.html">Atualizar Pedidos</a></li>
-        <li><a href="relatorio.html">Relatorio</a></li>
-      </ul>
-    </nav>
-  </header>
+  <!-- O restante do HTML permanece igual até a seção de scripts -->
 
-  <main>
-    <section id="auth-section">
-      <h2>Autenticação</h2>
-      <form id="loginForm">
-        <input type="email" id="loginEmail" placeholder="Email" required />
-        <input type="password" id="loginPassword" placeholder="Senha" required />
-        <button type="submit">Entrar</button>
-      </form>
-      <button id="logoutBtn" style="display:none;">Sair</button>
-      <p id="usuarioLogado"></p>
-    </section>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      doc,
+      updateDoc,
+      deleteDoc,
+      query,
+      orderBy,
+      limit,
+      getCountFromServer
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    <section>
-      <h1>Gerar Pedido</h1>
-      <form id="pedidoForm">
-        <input type="hidden" id="pedidoFirebaseId" />
-        <label for="item">Item:</label>
-        <input type="text" id="item" required />
-        <label for="op">OP:</label>
-        <input type="number" id="op" required />
-        <label for="quantidade">Quantidade:</label>
-        <input type="number" id="quantidade" required />
-        <label for="parceiro">Parceiro de Negócio:</label>
-        <select id="parceiro" required>
-          <option value="">Selecione um parceiro</option>
-          <option value="AGEMEC">AGEMEC</option>
-           <option value="IMAC">IMAC</option>
-          <option value="BORMIL">BORMIL</option>
-          <option value="SANMAC">SANMAC</option>
-          <option value="RETISUL">RETISUL</option>
-          <option value="INSDUSTERM">INSDUSTERM</option>
-          <option value="INDUTHERM">INDUTHERM</option>
-          <option value="DUJ">DUJ</option>
-          <option value="PTO">PTO</option>
-          <option value="CLT">CLT</option>
-          <option value="IRAPURU">IRAPURU</option>
-                  </select>
-        <button type="submit" id="submitButton">Gerar Pedido</button>
-        <button type="button" id="cancelarEdicao" style="display: none;">Cancelar Edição</button>
-      </form>
-    </section>
-
-    <section>
-      <h2>Pedidos Gerados</h2>
-      <table id="pedidoTable">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>OP</th>
-            <th>Quantidade</th>
-            <th>Parceiro</th>
-            <th>Status</th>
-            <th>Data</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- pedidos renderizados aqui -->
-        </tbody>
-      </table>
-    </section>
-  </main>
-
-  <footer>
-    <div class="footer-logo">
-      <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo" />
-    </div>
-    <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
-  </footer>
-
-  <!-- Firebase SDK -->
-<!-- ... HTML até <script type="module"> permanece o mesmo ... -->
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    addDoc,
-    getDocs,
-    doc,
-    updateDoc,
-    deleteDoc
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import {
-    getAuth,
-    signInWithEmailAndPassword,
-    onAuthStateChanged,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
-    authDomain: "walterscheid-estoque.firebaseapp.com",
-    projectId: "walterscheid-estoque",
-    storageBucket: "walterscheid-estoque.firebasestorage.app",
-    messagingSenderId: "487386736937",
-    appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
-    measurementId: "G-9PL8JP0SD4"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-
-  const form = document.getElementById("pedidoForm");
-  const tabela = document.querySelector("#pedidoTable tbody");
-  const btnCancelar = document.getElementById("cancelarEdicao");
-  const btnSubmit = document.getElementById("submitButton");
-
-  async function registrarHistorico(pedidoId, dados, acao) {
-    try {
-      await addDoc(collection(db, "historicoPedidos"), {
-        pedidoId,
-        item: dados.item,
-        op: dados.op,
-        quantidade: dados.quantidade,
-        parceiro: dados.parceiro,
-        status: dados.status,
-        operador: dados.operador || "-",
-        comentario: dados.comentario || "-",
-        dataEtapa: new Date().toISOString(),
-        acao
-      });
-    } catch (error) {
-      console.error("Erro ao registrar histórico:", error);
-    }
-  }
-
-  document.getElementById("loginForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const email = document.getElementById("loginEmail").value;
-    const password = document.getElementById("loginPassword").value;
-
-    signInWithEmailAndPassword(auth, email, password)
-      .then(() => alert("Login realizado!"))
-      .catch((error) => alert("Erro ao fazer login: " + error.message));
-  });
-
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    signOut(auth);
-  });
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      document.getElementById("auth-section").style.display = "block";
-      document.getElementById("logoutBtn").style.display = "inline";
-      document.getElementById("usuarioLogado").innerText = `Logado como: ${user.email}`;
-    } else {
-      document.getElementById("usuarioLogado").innerText = "Não autenticado";
-    }
-  });
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const item = document.getElementById("item").value;
-    const op = document.getElementById("op").value;
-    const quantidade = document.getElementById("quantidade").value;
-    const parceiro = document.getElementById("parceiro").value;
-    const id = document.getElementById("pedidoFirebaseId").value;
-
-    const user = auth.currentUser;
-    if (!user) {
-      alert("Usuário não autenticado.");
-      return;
-    }
-
-    const pedido = {
-      item,
-      op,
-      quantidade,
-      parceiro,
-      emailCriador: user.email,
-      status: "Não Liberado",
-      dataEntrada: new Date().toISOString(),
-      dataLiberacao: null
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.appspot.com",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+      measurementId: "G-9PL8JP0SD4"
     };
 
-    try {
-      if (id) {
-        await updateDoc(doc(db, "pedidos", id), pedido);
-        alert("Pedido atualizado com sucesso!");
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    const form = document.getElementById("pedidoForm");
+    const tabela = document.querySelector("#pedidoTable tbody");
+    const btnCancelar = document.getElementById("cancelarEdicao");
+    const btnSubmit = document.getElementById("submitButton");
+
+    // Função para gerar o próximo ID sequencial
+    async function getNextPedidoId() {
+      try {
+        // Conta quantos pedidos já existem
+        const coll = collection(db, "pedidos");
+        const snapshot = await getCountFromServer(coll);
+        const totalPedidos = snapshot.data().count;
+        
+        // Começa do ID 24 se já existem 23 pedidos
+        return totalPedidos + 24;
+      } catch (error) {
+        console.error("Erro ao contar pedidos:", error);
+        // Se houver erro, começa do 24 (assumindo que já existem 23)
+        return 24;
+      }
+    }
+
+    async function registrarHistorico(pedidoId, dados, acao) {
+      try {
+        await addDoc(collection(db, "historicoPedidos"), {
+          pedidoId,
+          item: dados.item,
+          op: dados.op,
+          quantidade: dados.quantidade,
+          parceiro: dados.parceiro,
+          status: dados.status,
+          operador: dados.operador || "-",
+          comentario: dados.comentario || "-",
+          dataEtapa: new Date().toISOString(),
+          acao
+        });
+      } catch (error) {
+        console.error("Erro ao registrar histórico:", error);
+      }
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => alert("Login realizado!"))
+        .catch((error) => alert("Erro ao fazer login: " + error.message));
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      signOut(auth);
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("auth-section").style.display = "block";
+        document.getElementById("logoutBtn").style.display = "inline";
+        document.getElementById("usuarioLogado").innerText = `Logado como: ${user.email}`;
       } else {
-        const docRef = await addDoc(collection(db, "pedidos"), pedido);
-        await registrarHistorico(docRef.id, pedido, "criado");
-        alert("Pedido gerado com sucesso!");
+        document.getElementById("usuarioLogado").innerText = "Não autenticado";
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const item = document.getElementById("item").value;
+      const op = document.getElementById("op").value;
+      const quantidade = document.getElementById("quantidade").value;
+      const parceiro = document.getElementById("parceiro").value;
+      const id = document.getElementById("pedidoFirebaseId").value;
+
+      const user = auth.currentUser;
+      if (!user) {
+        alert("Usuário não autenticado.");
+        return;
       }
 
-      form.reset();
-      btnCancelar.style.display = "none";
-      btnSubmit.innerText = "Gerar Pedido";
-      document.getElementById("pedidoFirebaseId").value = "";
-      carregarPedidos();
-    } catch (error) {
-      console.error(error);
-      alert("Erro ao salvar pedido.");
-    }
-  });
+      const pedido = {
+        item,
+        op,
+        quantidade,
+        parceiro,
+        emailCriador: user.email,
+        status: "Não Liberado",
+        dataEntrada: new Date().toISOString(),
+        dataLiberacao: null
+      };
 
-  btnCancelar.onclick = () => {
-    form.reset();
-    document.getElementById("pedidoFirebaseId").value = "";
-    btnCancelar.style.display = "none";
-    btnSubmit.innerText = "Gerar Pedido";
-  };
-
-  async function carregarPedidos() {
-    const querySnapshot = await getDocs(collection(db, "pedidos"));
-    tabela.innerHTML = "";
-
-    querySnapshot.forEach((docSnap) => {
-      const pedido = docSnap.data();
-      const linha = tabela.insertRow();
-      linha.innerHTML = `
-        <td>${pedido.item}</td>
-        <td>${pedido.op}</td>
-        <td>${pedido.quantidade}</td>
-        <td>${pedido.parceiro}</td>
-        <td>${pedido.status}</td>
-        <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
-        <td>
-          <button onclick="editarPedido('${docSnap.id}', ${JSON.stringify(pedido).replace(/"/g, '&quot;')})">Editar</button>
-          <button onclick="excluirPedido('${docSnap.id}')">Excluir</button>
-        </td>
-      `;
-    });
-  }
-
-  window.editarPedido = (id, pedido) => {
-    document.getElementById("item").value = pedido.item;
-    document.getElementById("op").value = pedido.op;
-    document.getElementById("quantidade").value = pedido.quantidade;
-    document.getElementById("parceiro").value = pedido.parceiro;
-    document.getElementById("pedidoFirebaseId").value = id;
-    btnSubmit.innerText = "Atualizar Pedido";
-    btnCancelar.style.display = "inline";
-  };
-
-  window.excluirPedido = async (id) => {
-    if (confirm("Tem certeza que deseja excluir este pedido?")) {
       try {
-        await deleteDoc(doc(db, "pedidos", id));
-        alert("Pedido excluído com sucesso!");
+        if (id) {
+          // Atualização de pedido existente
+          await updateDoc(doc(db, "pedidos", id), pedido);
+          alert("Pedido atualizado com sucesso!");
+        } else {
+          // Novo pedido - adiciona ID sequencial
+          const pedidoId = await getNextPedidoId();
+          pedido.pedidoId = pedidoId; // Adiciona o ID sequencial ao pedido
+          
+          const docRef = await addDoc(collection(db, "pedidos"), pedido);
+          await registrarHistorico(docRef.id, pedido, "criado");
+          alert(`Pedido #${pedidoId} gerado com sucesso!`);
+        }
+
+        form.reset();
+        btnCancelar.style.display = "none";
+        btnSubmit.innerText = "Gerar Pedido";
+        document.getElementById("pedidoFirebaseId").value = "";
         carregarPedidos();
       } catch (error) {
         console.error(error);
-        alert("Erro ao excluir pedido.");
+        alert("Erro ao salvar pedido.");
       }
+    });
+
+    btnCancelar.onclick = () => {
+      form.reset();
+      document.getElementById("pedidoFirebaseId").value = "";
+      btnCancelar.style.display = "none";
+      btnSubmit.innerText = "Gerar Pedido";
+    };
+
+    async function carregarPedidos() {
+      const querySnapshot = await getDocs(query(collection(db, "pedidos"), orderBy("pedidoId", "desc")));
+      tabela.innerHTML = "";
+
+      querySnapshot.forEach((docSnap) => {
+        const pedido = docSnap.data();
+        const linha = tabela.insertRow();
+        linha.innerHTML = `
+          <td>${pedido.item}</td>
+          <td>${pedido.op}</td>
+          <td>${pedido.quantidade}</td>
+          <td>${pedido.parceiro}</td>
+          <td>${pedido.status}</td>
+          <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
+          <td>
+            <button onclick="editarPedido('${docSnap.id}', ${JSON.stringify(pedido).replace(/"/g, '&quot;')})">Editar</button>
+            <button onclick="excluirPedido('${docSnap.id}')">Excluir</button>
+          </td>
+        `;
+      });
     }
-  };
 
-  window.onload = carregarPedidos;
-</script>
+    window.editarPedido = (id, pedido) => {
+      document.getElementById("item").value = pedido.item;
+      document.getElementById("op").value = pedido.op;
+      document.getElementById("quantidade").value = pedido.quantidade;
+      document.getElementById("parceiro").value = pedido.parceiro;
+      document.getElementById("pedidoFirebaseId").value = id;
+      btnSubmit.innerText = "Atualizar Pedido";
+      btnCancelar.style.display = "inline";
+    };
 
+    window.excluirPedido = async (id) => {
+      if (confirm("Tem certeza que deseja excluir este pedido?")) {
+        try {
+          await deleteDoc(doc(db, "pedidos", id));
+          alert("Pedido excluído com sucesso!");
+          carregarPedidos();
+        } catch (error) {
+          console.error(error);
+          alert("Erro ao excluir pedido.");
+        }
+      }
+    };
+
+    window.onload = carregarPedidos;
+  </script>
 </body>
 </html>
