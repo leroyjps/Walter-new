@@ -25,33 +25,62 @@
   <main>
     <section>
       <h1>Atualizar Pedidos</h1>
+      
+      <div class="filtros">
+        <input type="number" id="filtroId" placeholder="Filtrar por ID">
+        <input type="text" id="filtroItem" placeholder="Filtrar por Item">
+        <input type="text" id="filtroOp" placeholder="Filtrar por OP">
+        <select id="filtroStatus">
+          <option value="">Todos status</option>
+          <option value="Não Liberado">Não Liberado</option>
+          <option value="Liberado">Liberado</option>
+          <option value="Em Produção">Em Produção</option>
+          <option value="Concluído">Concluído</option>
+          <option value="Falta">Falta</option>
+          <option value="Pago">Pago</option>
+        </select>
+        <button onclick="aplicarFiltros()">Filtrar</button>
+        <button onclick="limparFiltros()">Limpar</button>
+      </div>
 
-      <label for="pedidoId">ID do Pedido na Tabela:</label>
-      <input type="number" id="pedidoId" required />
+      <div class="form-atualizacao">
+        <div class="form-group">
+          <label for="pedidoId">ID do Pedido:</label>
+          <input type="number" id="pedidoId" readonly />
+        </div>
+        
+        <div class="form-group">
+          <label for="status">Atualizar Status:</label>
+          <select id="status" required>
+            <option value="">Selecione um status</option>
+            <option value="Liberado">Liberado</option>
+            <option value="Em Produção">Em Produção</option>
+            <option value="Concluído">Concluído</option>
+            <option value="Falta">Falta</option>
+            <option value="Pago">Pago</option>
+            <option value="Não Liberado">Não Liberado</option>
+          </select>
+        </div>
 
-      <label for="status">Atualizar Status:</label>
-      <select id="status" required>
-        <option value="Liberado">Liberado</option>
-        <option value="Falta">Falta</option>
-        <option value="Pago">Pago</option>
-        <option value="Não Liberado">Não Liberado</option>
-      </select>
+        <div class="form-group">
+          <label for="operador">Operador:</label>
+          <select id="operador" required>
+            <option value="">Selecione um operador</option>
+            <option value="Paulo">Paulo</option>
+            <option value="Jordahn">Jordahn</option>
+            <option value="Junior">Junior</option>
+            <option value="Carlos">Carlos</option>
+            <option value="Rodrigo">Rodrigo</option>
+          </select>
+        </div>
 
-      <label for="operador">Nome do Operador:</label>
-      <select id="operador" required>
-        <option value="">Selecione um operador</option>
-        <option value="Paulo">Paulo</option>
-        <option value="Jordahn">Jordahn</option>
-        <option value="Junior">Junior</option>
-        <option value="Carlos">Carlos</option>
-        <option value="Rodrigo">Rodrigo</option>
-      </select>
+        <div class="form-group">
+          <label for="comentario">Comentário:</label>
+          <textarea id="comentario" rows="4" placeholder="Adicione um comentário sobre o pedido" required></textarea>
+        </div>
 
-      <!-- Comentário único -->
-      <label for="comentario">Comentário:</label>
-      <textarea id="comentario" rows="4" placeholder="Adicione um comentário sobre o pedido" required></textarea>
-
-      <button id="atualizarBtn">Atualizar Status</button>
+        <button id="atualizarBtn" class="btn-primary">Atualizar Status</button>
+      </div>
 
       <h2>Pedidos Existentes</h2>
       <table id="pedidoTable">
@@ -59,12 +88,13 @@
           <tr>
             <th>ID</th>
             <th>Item</th>
-            <th>Op</th>
+            <th>OP</th>
             <th>Quantidade</th>
-            <th>Parceiro de Negócio</th>
+            <th>Parceiro</th>
             <th>Status</th>
-            <th>Comentário</th> <!-- Exibindo Comentário -->
             <th>Operador</th>
+            <th>Data Entrada</th>
+            <th>Selecionar</th>
           </tr>
         </thead>
         <tbody>
@@ -94,19 +124,22 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
+    import { 
       getFirestore,
       collection,
       getDocs,
       updateDoc,
-      doc
+      doc,
+      query,
+      where,
+      orderBy
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
       authDomain: "walterscheid-estoque.firebaseapp.com",
       projectId: "walterscheid-estoque",
-      storageBucket: "walterscheid-estoque.firebasestorage.app",
+      storageBucket: "walterscheid-estoque.appspot.com",
       messagingSenderId: "487386736937",
       appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
       measurementId: "G-9PL8JP0SD4"
@@ -116,15 +149,65 @@
     const db = getFirestore(app);
 
     let pedidos = [];
+    let pedidosFiltrados = [];
     let currentPage = 1;
     const itemsPerPage = 10;
+    let pedidoSelecionado = null;
 
     async function buscarPedidos() {
-      const querySnapshot = await getDocs(collection(db, "pedidos"));
-      pedidos = [];
-      querySnapshot.forEach((doc) => {
-        pedidos.push({ id: doc.id, ...doc.data() });
+      try {
+        const q = query(collection(db, "pedidos"), orderBy("pedidoId", "desc"));
+        const querySnapshot = await getDocs(q);
+        
+        pedidos = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          pedidos.push({ 
+            id: doc.id,
+            pedidoId: data.pedidoId,
+            ...data 
+          });
+        });
+        
+        pedidosFiltrados = [...pedidos];
+        atualizarTabela();
+      } catch (error) {
+        console.error("Erro ao buscar pedidos:", error);
+        alert("Erro ao carregar pedidos. Por favor, recarregue a página.");
+      }
+    }
+
+    function aplicarFiltros() {
+      const filtroId = document.getElementById("filtroId").value;
+      const filtroItem = document.getElementById("filtroItem").value.toLowerCase();
+      const filtroOp = document.getElementById("filtroOp").value;
+      const filtroStatus = document.getElementById("filtroStatus").value;
+
+      pedidosFiltrados = pedidos.filter(pedido => {
+        const matchId = !filtroId || 
+                       (pedido.pedidoId && pedido.pedidoId.toString().includes(filtroId));
+        const matchItem = !filtroItem || 
+                        (pedido.item && pedido.item.toLowerCase().includes(filtroItem));
+        const matchOp = !filtroOp || 
+                       (pedido.op && pedido.op.toString().includes(filtroOp));
+        const matchStatus = !filtroStatus || 
+                          (pedido.status && pedido.status === filtroStatus);
+
+        return matchId && matchItem && matchOp && matchStatus;
       });
+
+      currentPage = 1;
+      atualizarTabela();
+    }
+
+    function limparFiltros() {
+      document.getElementById("filtroId").value = '';
+      document.getElementById("filtroItem").value = '';
+      document.getElementById("filtroOp").value = '';
+      document.getElementById("filtroStatus").value = '';
+      
+      pedidosFiltrados = [...pedidos];
+      currentPage = 1;
       atualizarTabela();
     }
 
@@ -133,101 +216,117 @@
       tbody.innerHTML = "";
 
       const start = (currentPage - 1) * itemsPerPage;
-      const pagePedidos = pedidos.slice(start, start + itemsPerPage);
+      const pagePedidos = pedidosFiltrados.slice(start, start + itemsPerPage);
 
-      pagePedidos.forEach((pedido, index) => {
+      pagePedidos.forEach((pedido) => {
         const linha = tbody.insertRow();
+        
+        // Formata a data para exibição
+        const dataEntrada = pedido.dataEntrada ? 
+          new Date(pedido.dataEntrada).toLocaleDateString('pt-BR') : 'N/A';
+        
         linha.innerHTML = `
-          <td>${start + index + 1}</td>
-          <td>${pedido.item}</td>
-          <td>${pedido.op}</td>
-          <td>${pedido.quantidade}</td>
-          <td>${pedido.parceiro}</td>
-          <td>${pedido.status}</td>
-          <td>${pedido.comentario || "-"}</td> <!-- Exibindo Comentário -->
-          <td>${pedido.operador || "-"}</td>
+          <td>${pedido.pedidoId || 'N/A'}</td>
+          <td>${pedido.item || 'N/A'}</td>
+          <td>${pedido.op || 'N/A'}</td>
+          <td>${pedido.quantidade || 'N/A'}</td>
+          <td>${pedido.parceiro || 'N/A'}</td>
+          <td class="status-${pedido.status?.replace(/\s+/g, '-').toLowerCase() || ''}">${pedido.status || 'N/A'}</td>
+          <td>${pedido.operador || 'N/A'}</td>
+          <td>${dataEntrada}</td>
+          <td><button class="btn-selecionar" onclick="selecionarPedido('${pedido.id}')">Selecionar</button></td>
         `;
       });
 
       document.getElementById("page-info").innerText =
-        `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
+        `Página ${currentPage} de ${Math.ceil(pedidosFiltrados.length / itemsPerPage)}`;
       document.getElementById("prev-btn").disabled = currentPage === 1;
       document.getElementById("next-btn").disabled =
-        (start + itemsPerPage) >= pedidos.length;
+        (start + itemsPerPage) >= pedidosFiltrados.length;
     }
 
-    document.getElementById("pedidoId").addEventListener("input", async function () {
-      const pedidoId = parseInt(document.getElementById("pedidoId").value.trim());
-      if (isNaN(pedidoId)) {
+    window.selecionarPedido = async function(pedidoId) {
+      try {
+        const pedido = pedidos.find(p => p.id === pedidoId);
+        if (!pedido) return;
+        
+        pedidoSelecionado = pedido;
+        
+        document.getElementById("pedidoId").value = pedido.pedidoId || '';
+        document.getElementById("status").value = pedido.status || '';
+        document.getElementById("operador").value = pedido.operador || '';
+        document.getElementById("comentario").value = pedido.comentario || '';
+        
+        // Rola até o formulário de atualização
+        document.querySelector('.form-atualizacao').scrollIntoView({
+          behavior: 'smooth'
+        });
+      } catch (error) {
+        console.error("Erro ao selecionar pedido:", error);
+      }
+    };
+
+    document.getElementById("atualizarBtn").onclick = async function() {
+      if (!pedidoSelecionado) {
+        alert("Por favor, selecione um pedido da tabela primeiro.");
         return;
       }
 
-      const pedido = pedidos.find(p => p.id === pedidoId);
-      if (pedido) {
-        // Exibe o comentário atual do pedido no campo de comentário
-        document.getElementById("comentario").value = pedido.comentario || "";
-      } else {
-        document.getElementById("comentario").value = "";
-      }
-    });
-
-    document.getElementById("atualizarBtn").onclick = async function () {
-      const idTabela = parseInt(document.getElementById("pedidoId").value.trim());
       const novoStatus = document.getElementById("status").value;
-      const nomeOperador = document.getElementById("operador").value.trim();
-      const comentarioNovo = document.getElementById("comentario").value.trim();
+      const nomeOperador = document.getElementById("operador").value;
+      const comentarioNovo = document.getElementById("comentario").value;
 
-      if (!nomeOperador) {
-        alert("Por favor, insira o nome do operador.");
-        return;
-      }
-
-      if (isNaN(idTabela) || idTabela <= 0) {
-        alert("Informe um número de ID válido da tabela.");
-        return;
-      }
-
-      const indexPedido = (currentPage - 1) * itemsPerPage + (idTabela - 1);
-
-      if (!pedidos[indexPedido]) {
-        alert("ID informado não corresponde a nenhum pedido listado.");
+      if (!novoStatus || !nomeOperador) {
+        alert("Por favor, preencha todos os campos obrigatórios.");
         return;
       }
 
       try {
-        const pedidoDoc = doc(db, "pedidos", pedidos[indexPedido].id);
+        const pedidoDoc = doc(db, "pedidos", pedidoSelecionado.id);
         const atualizacao = {
           status: novoStatus,
           operador: nomeOperador,
-          comentario: comentarioNovo // Atualiza o comentário
+          comentario: comentarioNovo
         };
 
-        if (novoStatus === "Liberado") {
+        // Atualiza data de liberação se o status for "Liberado"
+        if (novoStatus === "Liberado" && pedidoSelecionado.status !== "Liberado") {
           atualizacao.dataLiberacao = new Date().toISOString();
         }
 
         await updateDoc(pedidoDoc, atualizacao);
 
-        // Envia e-mail via EmailJS
-        const pedido = pedidos[indexPedido];
+        // Envia e-mail de notificação
+        if (pedidoSelecionado.emailCriador) {
+          emailjs.send("service_how3gpr", "template_nffl5al", {
+            to_email: pedidoSelecionado.emailCriador,
+            item: pedidoSelecionado.item,
+            status: novoStatus,
+            operador: nomeOperador,
+            comentario: comentarioNovo,
+            pedidoId: pedidoSelecionado.pedidoId
+          }).then(() => {
+            console.log("Email enviado com sucesso!");
+          }).catch((error) => {
+            console.error("Erro ao enviar email:", error);
+          });
+        }
 
-        emailjs.send("service_how3gpr", "template_nffl5al", {
-          to_email: pedido.emailCriador,
-          item: pedido.item,
-          status: novoStatus,
-          operador: nomeOperador,
-          comentario: comentarioNovo // Envia o comentário atualizado por e-mail
-        }).then(() => {
-          console.log("Email enviado com sucesso!");
-        }).catch((error) => {
-          console.error("Erro ao enviar email:", error);
-        });
-
-        alert("Status atualizado com sucesso!");
-        buscarPedidos();
+        alert(`Pedido #${pedidoSelecionado.pedidoId} atualizado com sucesso!`);
+        
+        // Atualiza a lista de pedidos
+        await buscarPedidos();
+        
+        // Limpa o formulário
+        pedidoSelecionado = null;
+        document.getElementById("pedidoId").value = '';
+        document.getElementById("status").value = '';
+        document.getElementById("operador").value = '';
+        document.getElementById("comentario").value = '';
+        
       } catch (error) {
-        console.error(error);
-        alert("Erro ao atualizar o status.");
+        console.error("Erro ao atualizar pedido:", error);
+        alert("Erro ao atualizar o pedido. Por favor, tente novamente.");
       }
     };
 
@@ -239,13 +338,142 @@
     };
 
     window.nextPage = () => {
-      if (currentPage * itemsPerPage < pedidos.length) {
+      if (currentPage * itemsPerPage < pedidosFiltrados.length) {
         currentPage++;
         atualizarTabela();
       }
     };
 
+    // Adiciona eventos para filtrar ao pressionar Enter
+    document.getElementById("filtroId").addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') aplicarFiltros();
+    });
+    document.getElementById("filtroItem").addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') aplicarFiltros();
+    });
+    document.getElementById("filtroOp").addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') aplicarFiltros();
+    });
+
     window.onload = buscarPedidos;
   </script>
+
+  <style>
+    .filtros {
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .filtros input, .filtros select {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .filtros button {
+      padding: 8px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .filtros button:hover {
+      background-color: #45a049;
+    }
+    
+    .form-atualizacao {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .form-group textarea {
+      min-height: 80px;
+    }
+    
+    .btn-primary {
+      background-color: #2196F3;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    .btn-primary:hover {
+      background-color: #0b7dda;
+    }
+    
+    .btn-selecionar {
+      background-color: #4CAF50;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .btn-selecionar:hover {
+      background-color: #45a049;
+    }
+    
+    /* Estilos para os status */
+    .status-liberado {
+      color: #2e7d32;
+      font-weight: bold;
+    }
+    
+    .status-não-liberado {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+    
+    .status-em-produção {
+      color: #ff8f00;
+      font-weight: bold;
+    }
+    
+    .status-concluído {
+      color: #1565c0;
+      font-weight: bold;
+    }
+    
+    .status-falta {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+    
+    .status-pago {
+      color: #2e7d32;
+      font-weight: bold;
+    }
+  </style>
 </body>
 </html>
