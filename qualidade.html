@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel de Qualidade - Walterscheid Powertrain Group</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  
+ <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    font-family: 'Poppins', sans-serif;
+    background-color: #000;
+    color: #fff;
+  }
+
+  header, footer {
+    background: #222;
+    padding: 10px;
+    text-align: center;
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+
+  .video-container {
+    flex: 2;
+    background: #111;
+  }
+
+  .video-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: left center; /* foco na esquerda */
+  }
+
+  .info-container {
+    flex: 1;
+    background: #1a1a1a;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  th, td {
+    padding: 6px;
+    border-bottom: 1px solid #444;
+    text-align: left;
+  }
+
+  th {
+    background: #333;
+  }
+
+  .pagination {
+    margin-top: 5px;
+    text-align: center;
+  }
+
+  .pagination button {
+    background: #f1c40f;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin: 0 5px;
+  }
+
+  .pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .destaque-pedido {
+    animation: piscar 1s ease-in-out infinite;
+  }
+
+  @keyframes piscar {
+    0%, 100% { background-color: #fff3cd; }
+    50% { background-color: #ffeeba; }
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <h1>Painel de Qualidade - Walterscheid Powertrain Group</h1>
+  </header>
+
+  <main>
+    <!-- Coluna do vídeo -->
+    <div class="video-container">
+      <video id="qualidadeVideo" autoplay muted loop></video>
+    </div>
+
+    <!-- Coluna do painel de pedidos -->
+    <div class="info-container">
+      <h2>Pedidos para Liberação</h2>
+      <table id="pedidoTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Item</th>
+            <th>Op</th>
+            <th>Qtd</th>
+            <th>Parceiro</th>
+            <th>Status</th>
+            <th>Entrada</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Pedidos via JS -->
+        </tbody>
+      </table>
+      <div class="pagination">
+        <button id="prev-btn" onclick="previousPage()">Anterior</button>
+        <span id="page-info"></span>
+        <button id="next-btn" onclick="nextPage()">Próxima</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2024 Walterscheid. Todos os direitos reservados.
+  </footer>
+
+  <audio id="notificacaoAudio" src="components/audio/alerta.mp3" preload="auto"></audio>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      query,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.firebasestorage.app",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+      measurementId: "G-9PL8JP0SD4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let pedidos = [];
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let pedidoDestaqueId = null;
+
+    async function fetchPedidos() {
+      const q = query(collection(db, "pedidos"), orderBy("dataEntrada", "desc"));
+      const querySnapshot = await getDocs(q);
+      const novosPedidos = [];
+
+      querySnapshot.forEach((doc) => {
+        novosPedidos.push({ id: doc.id, ...doc.data() });
+      });
+
+      const novoDetectado = pedidos.length > 0 && novosPedidos.length > 0 && novosPedidos[0].id !== pedidos[0].id;
+      if (novoDetectado) {
+        pedidoDestaqueId = novosPedidos[0].id;
+        document.getElementById("notificacaoAudio").play();
+        setTimeout(() => {
+          pedidoDestaqueId = null;
+          renderPedidos();
+        }, 6000);
+      }
+
+      pedidos = novosPedidos;
+      renderPedidos();
+    }
+
+    function renderPedidos() {
+      const tabela = document.querySelector("#pedidoTable tbody");
+      tabela.innerHTML = "";
+
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const pagePedidos = pedidos.slice(start, end);
+
+      pagePedidos.forEach((pedido, index) => {
+        const linha = tabela.insertRow();
+        if (pedido.id === pedidoDestaqueId) {
+          linha.classList.add("destaque-pedido");
+        }
+        linha.innerHTML = `
+          <td>${start + index + 1}</td>
+          <td>${pedido.item}</td>
+          <td>${pedido.op}</td>
+          <td>${pedido.quantidade}</td>
+          <td>${pedido.parceiro}</td>
+          <td>${pedido.status}</td>
+          <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
+        `;
+      });
+
+      document.getElementById("page-info").innerText =
+        `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
+      document.getElementById("prev-btn").disabled = currentPage === 1;
+      document.getElementById("next-btn").disabled = end >= pedidos.length;
+    }
+
+    window.previousPage = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPedidos();
+      }
+    };
+
+    window.nextPage = () => {
+      if (currentPage * itemsPerPage < pedidos.length) {
+        currentPage++;
+        renderPedidos();
+      }
+    };
+
+    // Playlist de vídeos
+    const videos = [
+      "components/videos/Alertas de qualidade CNH.mp4",
+      "components/videos/Walterscheid Agosto lilas.mp4",
+      "components/videos/qualidade3.mp4"
+    ];
+    let videoIndex = 0;
+    const videoElement = document.getElementById("qualidadeVideo");
+
+    function carregarVideo(index) {
+      videoElement.src = videos[index];
+      videoElement.play();
+    }
+
+    videoElement.addEventListener("ended", () => {
+      videoIndex = (videoIndex + 1) % videos.length;
+      carregarVideo(videoIndex);
+    });
+
+    carregarVideo(videoIndex);
+
+    window.onload = () => {
+      fetchPedidos();
+      setInterval(fetchPedidos, 450000);
+    };
+  </script>
+</body>
+</html>
