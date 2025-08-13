@@ -150,7 +150,7 @@ footer p {
 
 /* Seção de Embarques */
 .embarques-section {
-  padding: 3rem;
+  padding: 1rem;
   text-align: center;
 }
 
@@ -189,7 +189,7 @@ footer p {
 /* Responsividade para tabelas maiores */
 @media (max-width: 1800px) {
   .responsive-iframe {
-    height: 1000px;
+    height: 1500px;
   }
 }
 
