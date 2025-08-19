@@ -30,7 +30,7 @@
           <tr>
             <th>ID</th>
             <th>Item</th>
-            <th>Op</th> <!-- Adicionando a coluna OP -->
+            <th>Op</th>
             <th>Quantidade</th>
             <th>Parceiro de Negócio</th>
             <th>Status</th>
@@ -90,7 +90,7 @@
     let pedidoDestaqueId = null;
 
     async function fetchPedidos() {
-      const q = query(collection(db, "pedidos"), orderBy("dataEntrada", "desc"));
+      const q = query(collection(db, "pedidos"), orderBy("idSequencial", "desc"));
       const querySnapshot = await getDocs(q);
       const novosPedidos = [];
 
@@ -99,7 +99,10 @@
       });
 
       // Detecta novo pedido
-      const novoDetectado = pedidos.length > 0 && novosPedidos.length > 0 && novosPedidos[0].id !== pedidos[0].id;
+      const novoDetectado = pedidos.length > 0 && novosPedidos.length > 0 && 
+        ((novosPedidos[0].idSequencial && pedidos[0].idSequencial && novosPedidos[0].idSequencial !== pedidos[0].idSequencial) ||
+        (!novosPedidos[0].idSequencial && novosPedidos[0].id !== pedidos[0].id));
+        
       if (novoDetectado) {
         pedidoDestaqueId = novosPedidos[0].id;
         document.getElementById("notificacaoAudio").play();
@@ -124,14 +127,14 @@
       pagePedidos.forEach((pedido, index) => {
         const linha = tabela.insertRow();
         if (pedido.id === pedidoDestaqueId) {
-          linha.style.backgroundColor = "#fff3cd"; // fundo amarelo claro
+          linha.style.backgroundColor = "#fff3cd";
           linha.style.fontWeight = "bold";
           linha.classList.add("destaque-pedido");
         }
         linha.innerHTML = `
-          <td>${start + index + 1}</td>
+          <td>${pedido.idSequencial || (start + index + 1)}</td>
           <td>${pedido.item}</td>
-          <td>${pedido.op}</td> <!-- Exibindo a OP -->
+          <td>${pedido.op}</td>
           <td>${pedido.quantidade}</td>
           <td>${pedido.parceiro}</td>
           <td>${pedido.status}</td>
@@ -164,16 +167,5 @@
       setInterval(fetchPedidos, 10000); // Atualiza a cada 10s
     };
   </script>
-
-  <style>
-    .destaque-pedido {
-      animation: piscar 1s ease-in-out infinite;
-    }
-
-    @keyframes piscar {
-      0%, 100% { background-color: #fff3cd; }
-      50% { background-color: #ffeeba; }
-    }
-  </style>
 </body>
 </html>

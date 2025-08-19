@@ -6,6 +6,7 @@
   <title>Atualizar Pedidos - Walterscheid Powertrain Group</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  
 </head>
 <body>
   <header>
@@ -26,7 +27,7 @@
     <section>
       <h1>Atualizar Pedidos</h1>
 
-      <label for="pedidoId">ID do Pedido na Tabela:</label>
+      <label for="pedidoId">ID do Pedido:</label>
       <input type="number" id="pedidoId" required />
 
       <label for="status">Atualizar Status:</label>
@@ -47,7 +48,6 @@
         <option value="Rodrigo">Rodrigo</option>
       </select>
 
-      <!-- Comentário único -->
       <label for="comentario">Comentário:</label>
       <textarea id="comentario" rows="4" placeholder="Adicione um comentário sobre o pedido" required></textarea>
 
@@ -63,7 +63,7 @@
             <th>Quantidade</th>
             <th>Parceiro de Negócio</th>
             <th>Status</th>
-            <th>Comentário</th> <!-- Exibindo Comentário -->
+            <th>Comentário</th>
             <th>Operador</th>
           </tr>
         </thead>
@@ -89,7 +89,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script>
-    emailjs.init("peQF3Y1KwUgr3Rt5f"); // substitua pelo seu public key do EmailJS
+    emailjs.init("peQF3Y1KwUgr3Rt5f");
   </script>
 
   <script type="module">
@@ -99,7 +99,9 @@
       collection,
       getDocs,
       updateDoc,
-      doc
+      doc,
+      getDoc,
+      setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -119,12 +121,48 @@
     let currentPage = 1;
     const itemsPerPage = 10;
 
+    // Função para obter o próximo ID sequencial
+    async function getNextSequentialId() {
+      try {
+        const counterRef = doc(db, "counters", "pedidos");
+        const counterDoc = await getDoc(counterRef);
+        
+        if (counterDoc.exists()) {
+          const lastId = counterDoc.data().lastId;
+          const newId = lastId + 1;
+          await updateDoc(counterRef, { lastId: newId });
+          return newId;
+        } else {
+          // Primeira execução - criar o contador começando de 32 (já existem 31 pedidos)
+          await setDoc(counterRef, { lastId: 32 });
+          return 32;
+        }
+      } catch (error) {
+        console.error("Erro ao obter ID sequencial:", error);
+        throw error;
+      }
+    }
+
     async function buscarPedidos() {
       const querySnapshot = await getDocs(collection(db, "pedidos"));
       pedidos = [];
       querySnapshot.forEach((doc) => {
         pedidos.push({ id: doc.id, ...doc.data() });
       });
+      
+      // Ordenar por ID sequencial (se existir) ou pela data de entrada
+      pedidos.sort((a, b) => {
+        if (a.idSequencial && b.idSequencial) {
+          return a.idSequencial - b.idSequencial;
+        } else if (a.idSequencial) {
+          return -1;
+        } else if (b.idSequencial) {
+          return 1;
+        } else {
+          return new Date(a.dataEntrada) - new Date(b.dataEntrada);
+        }
+      });
+      
       atualizarTabela();
     }
 
@@ -138,13 +176,13 @@
       pagePedidos.forEach((pedido, index) => {
         const linha = tbody.insertRow();
         linha.innerHTML = `
-          <td>${start + index + 1}</td>
+          <td>${pedido.idSequencial || (start + index + 1)}</td>
           <td>${pedido.item}</td>
           <td>${pedido.op}</td>
           <td>${pedido.quantidade}</td>
           <td>${pedido.parceiro}</td>
           <td>${pedido.status}</td>
-          <td>${pedido.comentario || "-"}</td> <!-- Exibindo Comentário -->
+          <td>${pedido.comentario || "-"}</td>
           <td>${pedido.operador || "-"}</td>
         `;
       });
@@ -162,9 +200,8 @@
         return;
       }
 
-      const pedido = pedidos.find(p => p.id === pedidoId);
+      const pedido = pedidos.find(p => p.idSequencial === pedidoId);
       if (pedido) {
-        // Exibe o comentário atual do pedido no campo de comentário
         document.getElementById("comentario").value = pedido.comentario || "";
       } else {
         document.getElementById("comentario").value = "";
@@ -172,7 +209,7 @@
     });
 
     document.getElementById("atualizarBtn").onclick = async function () {
-      const idTabela = parseInt(document.getElementById("pedidoId").value.trim());
+      const idSequencial = parseInt(document.getElementById("pedidoId").value.trim());
       const novoStatus = document.getElementById("status").value;
       const nomeOperador = document.getElementById("operador").value.trim();
       const comentarioNovo = document.getElementById("comentario").value.trim();
@@ -182,24 +219,24 @@
         return;
       }
 
-      if (isNaN(idTabela) || idTabela <= 0) {
-        alert("Informe um número de ID válido da tabela.");
+      if (isNaN(idSequencial) || idSequencial <= 0) {
+        alert("Informe um número de ID válido.");
         return;
       }
 
-      const indexPedido = (currentPage - 1) * itemsPerPage + (idTabela - 1);
+      const pedido = pedidos.find(p => p.idSequencial === idSequencial);
 
-      if (!pedidos[indexPedido]) {
+      if (!pedido) {
         alert("ID informado não corresponde a nenhum pedido listado.");
         return;
       }
 
       try {
-        const pedidoDoc = doc(db, "pedidos", pedidos[indexPedido].id);
+        const pedidoDoc = doc(db, "pedidos", pedido.id);
         const atualizacao = {
           status: novoStatus,
           operador: nomeOperador,
-          comentario: comentarioNovo // Atualiza o comentário
+          comentario: comentarioNovo
         };
 
         if (novoStatus === "Liberado") {
@@ -209,14 +246,12 @@
         await updateDoc(pedidoDoc, atualizacao);
 
         // Envia e-mail via EmailJS
-        const pedido = pedidos[indexPedido];
-
         emailjs.send("service_how3gpr", "template_nffl5al", {
           to_email: pedido.emailCriador,
           item: pedido.item,
           status: novoStatus,
           operador: nomeOperador,
-          comentario: comentarioNovo // Envia o comentário atualizado por e-mail
+          comentario: comentarioNovo
         }).then(() => {
           console.log("Email enviado com sucesso!");
         }).catch((error) => {
