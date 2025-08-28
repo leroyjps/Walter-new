@@ -245,7 +245,7 @@
         // Envia e-mail via EmailJS
         emailjs.send("service_how3gpr", "template_nffl5al", {
           to_email: pedido.emailCriador,
-          id: pedido.id,
+          id: pedido.idSequencial,
           item: pedido.item,
           status: novoStatus,
           operador: nomeOperador,
