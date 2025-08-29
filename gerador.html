@@ -5,20 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gerar Pedidos - Walterscheid Powertrain Group</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
- <link rel="stylesheet" href="styles.css" />
-
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header>
     <nav>
-      <div id="title">
-        <h1>Walterscheid Powertrain Group</h1>
-      </div>
+      <div id="title"><h1>Walterscheid Powertrain Group</h1></div>
       <ul>
         <li><a href="index.html">Home</a></li>
         <li><a href="visualizador.html">Visualizar Pedidos</a></li>
         <li><a href="atualizar.html">Atualizar Pedidos</a></li>
         <li><a href="relatorio.html">Relatorio</a></li>
+        <li><a href="chat.html">Meu Chat</a></li>
       </ul>
     </nav>
   </header>
@@ -53,15 +51,9 @@
           <option value="BORMIL">BORMIL</option>
           <option value="SANMAC">SANMAC</option>
           <option value="RETISUL">RETISUL</option>
-          <option value="INSDUSTERM">INSDUSTERM</option>
-          <option value="INDUTHERM">INDUTHERM</option>
-          <option value="DUJ">DUJ</option>
-          <option value="PTO">PTO</option>
-          <option value="CLT">CLT</option>
-          <option value="IRAPURU">IRAPURU</option>
         </select>
         <button type="submit" id="submitButton">Gerar Pedido</button>
-        <button type="button" id="cancelarEdicao" style="display: none;">Cancelar Edição</button>
+        <button type="button" id="cancelarEdicao" style="display:none;">Cancelar</button>
       </form>
     </section>
 
@@ -70,50 +62,41 @@
       <table id="pedidoTable">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Item</th>
-            <th>OP</th>
-            <th>Quantidade</th>
-            <th>Parceiro</th>
-            <th>Status</th>
-            <th>Data</th>
-            <th>Ações</th>
+            <th>ID</th><th>Item</th><th>OP</th><th>Quantidade</th>
+            <th>Parceiro</th><th>Status</th><th>Data</th><th>Ações</th>
           </tr>
         </thead>
-        <tbody>
-          <!-- pedidos renderizados aqui -->
-        </tbody>
+        <tbody></tbody>
       </table>
     </section>
   </main>
 
-  <footer>
-    <div class="footer-logo">
-      <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo" />
-    </div>
-    <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
-  </footer>
+  <footer><p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p></footer>
 
-  <!-- Firebase SDK -->
+  <!-- Chat popup button + window -->
+<button id="chatBtn" title="Abrir chat">💬 <span class="badge" id="chatBadge"></span></button>
+
+<div id="chatPopup" role="dialog" aria-hidden="true">
+  <header>
+    <h3>Chat Pedido <span id="chatPedidoId"></span></h3>
+    <div>
+      <button id="minimizeChat" aria-label="Minimizar">_</button>
+      <button id="closeChat" aria-label="Fechar chat">&times;</button>
+    </div>
+  </header>
+  <div class="chat-mensagens" id="chatMensagens"></div>
+  <div class="chat-input">
+    <textarea id="chatInput" rows="1" placeholder="Digite uma mensagem..."></textarea>
+    <button id="enviarMsg">➤</button>
+  </div>
+</div>
+
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      getDocs,
-      doc,
-      updateDoc,
-      deleteDoc,
-      getDoc,
-      setDoc
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
@@ -131,179 +114,138 @@
 
     const form = document.getElementById("pedidoForm");
     const tabela = document.querySelector("#pedidoTable tbody");
-    const btnCancelar = document.getElementById("cancelarEdicao");
-    const btnSubmit = document.getElementById("submitButton");
 
-    // Função para obter o próximo ID sequencial
     async function getNextSequentialId() {
-      try {
-        const counterRef = doc(db, "counters", "pedidos");
-        const counterDoc = await getDoc(counterRef);
-        
-        if (counterDoc.exists()) {
-          const lastId = counterDoc.data().lastId;
-          const newId = lastId + 1;
-          await updateDoc(counterRef, { lastId: newId });
-          return newId;
-        } else {
-          // Primeira execução - criar o contador começando de 32 (já existem 31 pedidos)
-          await setDoc(counterRef, { lastId: 32 });
-          return 32;
-        }
-      } catch (error) {
-        console.error("Erro ao obter ID sequencial:", error);
-        throw error;
+      const counterRef = doc(db, "counters", "pedidos");
+      const counterDoc = await getDoc(counterRef);
+      if (counterDoc && counterDoc.exists()) {
+        const newId = counterDoc.data().lastId + 1;
+        await updateDoc(counterRef, { lastId: newId });
+        return newId;
+      } else {
+        await setDoc(counterRef, { lastId: 1 });
+        return 1;
       }
     }
 
-    async function registrarHistorico(pedidoId, dados, acao) {
-      try {
-        await addDoc(collection(db, "historicoPedidos"), {
-          pedidoId,
-          item: dados.item,
-          op: dados.op,
-          quantidade: dados.quantidade,
-          parceiro: dados.parceiro,
-          status: dados.status,
-          operador: dados.operador || "-",
-          comentario: dados.comentario || "-",
-          dataEtapa: new Date().toISOString(),
-          acao
-        });
-      } catch (error) {
-        console.error("Erro ao registrar histórico:", error);
-      }
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const item = document.getElementById("item").value;
+      const op = document.getElementById("op").value;
+      const quantidade = document.getElementById("quantidade").value;
+      const parceiro = document.getElementById("parceiro").value;
+      const user = auth.currentUser;
+      if (!user) { alert("Usuário não autenticado."); return; }
+
+      const pedido = { item, op, quantidade, parceiro, emailCriador: user.email, status: "Não Liberado", dataEntrada: new Date().toISOString() };
+      const idSequencial = await getNextSequentialId();
+      pedido.idSequencial = idSequencial;
+      await addDoc(collection(db, "pedidos"), pedido);
+      alert("Pedido gerado com sucesso! ID: " + idSequencial);
+      form.reset();
+      carregarPedidos();
+    });
+
+    async function carregarPedidos() {
+      const querySnap = await getDocs(collection(db, "pedidos"));
+      tabela.innerHTML = "";
+      querySnap.forEach((docSnap) => {
+        const pedido = docSnap.data();
+        const linha = tabela.insertRow();
+        linha.innerHTML = `
+          <td>${pedido.idSequencial}</td><td>${pedido.item}</td>
+          <td>${pedido.op}</td><td>${pedido.quantidade}</td>
+          <td>${pedido.parceiro}</td><td>${pedido.status}</td>
+          <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
+          <td><button onclick="abrirChatPedido(${pedido.idSequencial})">💬 Chat</button></td>
+        `;
+      });
     }
 
     document.getElementById("loginForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const email = document.getElementById("loginEmail").value;
       const password = document.getElementById("loginPassword").value;
-
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => alert("Login realizado!"))
-        .catch((error) => alert("Erro ao fazer login: " + error.message));
+      signInWithEmailAndPassword(auth, email, password).catch((error) => alert("Erro: " + error.message));
     });
 
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      signOut(auth);
-    });
+    document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
 
     onAuthStateChanged(auth, (user) => {
-      if (user) {
-        document.getElementById("auth-section").style.display = "block";
-        document.getElementById("logoutBtn").style.display = "inline";
-        document.getElementById("usuarioLogado").innerText = `Logado como: ${user.email}`;
-      } else {
-        document.getElementById("usuarioLogado").innerText = "Não autenticado";
-      }
+      if (user) { document.getElementById("usuarioLogado").innerText = "Logado como: " + user.email; document.getElementById("logoutBtn").style.display = "inline"; carregarPedidos(); }
+      else { document.getElementById("usuarioLogado").innerText = "Não autenticado"; }
     });
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+    // ===== POPUP CHAT LOGIC =====
+    const chatBtn = document.getElementById("chatBtn");
+    const chatPopup = document.getElementById("chatPopup");
+    const closeChat = document.getElementById("closeChat");
+    const minimizeChat = document.getElementById("minimizeChat");
+    const chatMensagens = document.getElementById("chatMensagens");
+    const chatInput = document.getElementById("chatInput");
+    const enviarMsg = document.getElementById("enviarMsg");
+    const chatBadge = document.getElementById("chatBadge");
+    const chatPedidoIdSpan = document.getElementById("chatPedidoId");
 
-      const item = document.getElementById("item").value;
-      const op = document.getElementById("op").value;
-      const quantidade = document.getElementById("quantidade").value;
-      const parceiro = document.getElementById("parceiro").value;
-      const id = document.getElementById("pedidoFirebaseId").value;
+    let chatPedidoAtual = null;
+    let unsubscribe = null;
+    let unreadCount = 0;
+    let minimized = false;
 
-      const user = auth.currentUser;
-      if (!user) {
-        alert("Usuário não autenticado.");
-        return;
-      }
-
-      const pedido = {
-        item,
-        op,
-        quantidade,
-        parceiro,
-        emailCriador: user.email,
-        status: "Não Liberado",
-        dataEntrada: new Date().toISOString(),
-        dataLiberacao: null
-      };
-
-      try {
-        if (id) {
-          await updateDoc(doc(db, "pedidos", id), pedido);
-          alert("Pedido atualizado com sucesso!");
-        } else {
-          // Obter próximo ID sequencial para novos pedidos
-          const idSequencial = await getNextSequentialId();
-          pedido.idSequencial = idSequencial;
-          
-          const docRef = await addDoc(collection(db, "pedidos"), pedido);
-          await registrarHistorico(docRef.id, pedido, "criado");
-          alert(`Pedido gerado com sucesso! ID: ${idSequencial}`);
-        }
-
-        form.reset();
-        btnCancelar.style.display = "none";
-        btnSubmit.innerText = "Gerar Pedido";
-        document.getElementById("pedidoFirebaseId").value = "";
-        carregarPedidos();
-      } catch (error) {
-        console.error(error);
-        alert("Erro ao salvar pedido.");
-      }
-    });
-
-    btnCancelar.onclick = () => {
-      form.reset();
-      document.getElementById("pedidoFirebaseId").value = "";
-      btnCancelar.style.display = "none";
-      btnSubmit.innerText = "Gerar Pedido";
-    };
-
-    async function carregarPedidos() {
-      const querySnapshot = await getDocs(collection(db, "pedidos"));
-      tabela.innerHTML = "";
-
-      querySnapshot.forEach((docSnap) => {
-        const pedido = docSnap.data();
-        const linha = tabela.insertRow();
-        linha.innerHTML = `
-          <td>${pedido.idSequencial || "N/A"}</td>
-          <td>${pedido.item}</td>
-          <td>${pedido.op}</td>
-          <td>${pedido.quantidade}</td>
-          <td>${pedido.parceiro}</td>
-          <td>${pedido.status}</td>
-          <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
-          <td>
-            <button onclick="editarPedido('${docSnap.id}', ${JSON.stringify(pedido).replace(/"/g, '&quot;')})">Editar</button>
-            <button onclick="excluirPedido('${docSnap.id}')">Excluir</button>
-          </td>
-        `;
-      });
+    function updateBadge() {
+      if (unreadCount > 0) { chatBadge.innerText = unreadCount; chatBadge.style.display = "inline-block"; } else { chatBadge.style.display = "none"; }
     }
 
-    window.editarPedido = (id, pedido) => {
-      document.getElementById("item").value = pedido.item;
-      document.getElementById("op").value = pedido.op;
-      document.getElementById("quantidade").value = pedido.quantidade;
-      document.getElementById("parceiro").value = pedido.parceiro;
-      document.getElementById("pedidoFirebaseId").value = id;
-      btnSubmit.innerText = "Atualizar Pedido";
-      btnCancelar.style.display = "inline";
+    chatBtn.addEventListener("click", () => {
+      if (!chatPedidoAtual) { alert("Selecione um pedido (Abrir Chat) antes de usar o popup."); return; }
+      unreadCount = 0; updateBadge();
+      chatPopup.style.display = "flex";
+      carregarChat(chatPedidoAtual);
+    });
+
+    closeChat.addEventListener("click", () => { chatPopup.style.display = "none"; });
+
+    minimizeChat.addEventListener("click", () => {
+      minimized = !minimized;
+      if (minimized) { chatPopup.style.height = "50px"; chatPopup.querySelector(".chat-mensagens").style.display = "none"; chatPopup.querySelector(".chat-input").style.display = "none"; }
+      else { chatPopup.style.height = "500px"; chatPopup.querySelector(".chat-mensagens").style.display = "block"; chatPopup.querySelector(".chat-input").style.display = "flex"; }
+    });
+
+    window.abrirChatPedido = (pedidoId) => {
+      chatPedidoAtual = pedidoId;
+      chatPedidoIdSpan.innerText = pedidoId;
+      chatPopup.style.display = "flex";
+      carregarChat(pedidoId);
     };
 
-    window.excluirPedido = async (id) => {
-      if (confirm("Tem certeza que deseja excluir este pedido?")) {
-        try {
-          await deleteDoc(doc(db, "pedidos", id));
-          alert("Pedido excluído com sucesso!");
-          carregarPedidos();
-        } catch (error) {
-          console.error(error);
-          alert("Erro ao excluir pedido.");
-        }
-      }
-    };
+    enviarMsg.addEventListener("click", async () => {
+      if (!chatPedidoAtual) return;
+      const mensagem = chatInput.value.trim();
+      if (!mensagem) return;
+      const user = auth.currentUser;
+      const autor = user && user.email ? user.email : "criador";
+      await addDoc(collection(db, "respostasPedidos"), { pedidoId: chatPedidoAtual, autor, mensagem, data: new Date().toISOString() });
+      chatInput.value = "";
+    });
 
-    window.onload = carregarPedidos;
+    function carregarChat(pedidoId) {
+      chatMensagens.innerHTML = "";
+      if (unsubscribe) unsubscribe();
+      const q = query(collection(db, "respostasPedidos"), where("pedidoId", "==", pedidoId), orderBy("data", "asc"));
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        chatMensagens.innerHTML = "";
+        snapshot.forEach(docSnap => {
+          const r = docSnap.data();
+          const div = document.createElement("div");
+          const isCriador = r.autor && r.autor.includes && r.autor.includes("@");
+          div.className = "mensagem " + (isCriador ? "criador" : "estoque");
+          div.innerHTML = `<div class="bolha">${r.mensagem}<small>${r.autor} - ${new Date(r.data).toLocaleString()}</small></div>`;
+          chatMensagens.appendChild(div);
+        });
+        chatMensagens.scrollTop = chatMensagens.scrollHeight;
+        if (chatPopup.style.display === "none") { unreadCount++; updateBadge(); }
+      });
+    }
   </script>
 </body>
 </html>
