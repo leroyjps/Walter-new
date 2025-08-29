@@ -243,14 +243,15 @@
         await updateDoc(pedidoDoc, atualizacao);
 
         // Envia e-mail via EmailJS
-      emailjs.send("service_how3gpr", "template_nffl5al", {
+     emailjs.send("service_how3gpr", "template_nffl5al", {
   to_email: pedido.emailCriador,
-  pedidoId: pedido.idSequencial,
+  id: pedido.idSequencial,
   item: pedido.item,
   status: novoStatus,
   operador: nomeOperador,
   comentario: comentarioNovo
 })
+
 .then(() => {
           console.log("Email enviado com sucesso!");
         }).catch((error) => {
