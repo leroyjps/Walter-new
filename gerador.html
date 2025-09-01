@@ -253,6 +253,53 @@
         if (chatPopup.style.display === "none") { unreadCount++; updateBadge(); }
       });
     }
+
+     async function carregarPedidos() {
+      const querySnapshot = await getDocs(collection(db, "pedidos"));
+      tabela.innerHTML = "";
+
+      querySnapshot.forEach((docSnap) => {
+        const pedido = docSnap.data();
+        const linha = tabela.insertRow();
+        linha.innerHTML = `
+          <td>${pedido.idSequencial || "N/A"}</td>
+          <td>${pedido.item}</td>
+          <td>${pedido.op}</td>
+          <td>${pedido.quantidade}</td>
+          <td>${pedido.parceiro}</td>
+          <td>${pedido.status}</td>
+          <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
+          <td>
+            <button onclick="editarPedido('${docSnap.id}', ${JSON.stringify(pedido).replace(/"/g, '&quot;')})">Editar</button>
+            <button onclick="excluirPedido('${docSnap.id}')">Excluir</button>
+          </td>
+        `;
+      });
+    }
+
+    window.editarPedido = (id, pedido) => {
+      document.getElementById("item").value = pedido.item;
+      document.getElementById("op").value = pedido.op;
+      document.getElementById("quantidade").value = pedido.quantidade;
+      document.getElementById("parceiro").value = pedido.parceiro;
+      document.getElementById("pedidoFirebaseId").value = id;
+      btnSubmit.innerText = "Atualizar Pedido";
+      btnCancelar.style.display = "inline";
+    };
+
+    window.excluirPedido = async (id) => {
+      if (confirm("Tem certeza que deseja excluir este pedido?")) {
+        try {
+          await deleteDoc(doc(db, "pedidos", id));
+          alert("Pedido excluído com sucesso!");
+          carregarPedidos();
+        } catch (error) {
+          console.error(error);
+          alert("Erro ao excluir pedido.");
+        }
+      }
+    };
+
   </script>
 </body>
 </html>
