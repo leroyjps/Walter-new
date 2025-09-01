@@ -252,7 +252,7 @@
         chatMensagens.scrollTop = chatMensagens.scrollHeight;
         if (chatPopup.style.display === "none") { unreadCount++; updateBadge(); }
       });
-    }
+    };
 
      async function carregarPedidos() {
       const querySnapshot = await getDocs(collection(db, "pedidos"));
@@ -298,7 +298,7 @@
           alert("Erro ao excluir pedido.");
         }
       }
-    };
+    }
 
   </script>
 </body>
