@@ -81,29 +81,30 @@
   <footer><p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p></footer>
 
   <!-- Chat popup button + window -->
-<button id="chatBtn" title="Abrir chat">💬 <span class="badge" id="chatBadge"></span></button>
+  <button id="chatBtn" title="Abrir chat">💬 <span class="badge" id="chatBadge"></span></button>
 
-<div id="chatPopup" role="dialog" aria-hidden="true">
-  <header>
-    <h3>Chat Pedido <span id="chatPedidoId"></span></h3>
-    <div>
-      <button id="minimizeChat" aria-label="Minimizar">_</button>
-      <button id="closeChat" aria-label="Fechar chat">&times;</button>
+  <div id="chatPopup" role="dialog" aria-hidden="true">
+    <header>
+      <h3>Chat Pedido <span id="chatPedidoId"></span></h3>
+      <div>
+        <button id="minimizeChat" aria-label="Minimizar">_</button>
+        <button id="closeChat" aria-label="Fechar chat">&times;</button>
+      </div>
+    </header>
+    <div class="chat-mensagens" id="chatMensagens"></div>
+    <div class="chat-input">
+      <textarea id="chatInput" rows="1" placeholder="Digite uma mensagem..."></textarea>
+      <button id="enviarMsg">➤</button>
     </div>
-  </header>
-  <div class="chat-mensagens" id="chatMensagens"></div>
-  <div class="chat-input">
-    <textarea id="chatInput" rows="1" placeholder="Digite uma mensagem..."></textarea>
-    <button id="enviarMsg">➤</button>
   </div>
-</div>
-
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { 
+      getFirestore, collection, addDoc, getDocs, doc, updateDoc, getDoc, setDoc, deleteDoc,
+      query, orderBy, where, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
@@ -121,11 +122,13 @@
 
     const form = document.getElementById("pedidoForm");
     const tabela = document.querySelector("#pedidoTable tbody");
+    const btnSubmit = document.getElementById("submitButton");
+    const btnCancelar = document.getElementById("cancelarEdicao");
 
     async function getNextSequentialId() {
       const counterRef = doc(db, "counters", "pedidos");
       const counterDoc = await getDoc(counterRef);
-      if (counterDoc && counterDoc.exists()) {
+      if (counterDoc.exists()) {
         const newId = counterDoc.data().lastId + 1;
         await updateDoc(counterRef, { lastId: newId });
         return newId;
@@ -144,31 +147,88 @@
       const user = auth.currentUser;
       if (!user) { alert("Usuário não autenticado."); return; }
 
-      const pedido = { item, op, quantidade, parceiro, emailCriador: user.email, status: "Não Liberado", dataEntrada: new Date().toISOString() };
-      const idSequencial = await getNextSequentialId();
-      pedido.idSequencial = idSequencial;
-      await addDoc(collection(db, "pedidos"), pedido);
-      alert("Pedido gerado com sucesso! ID: " + idSequencial);
+      const idEdicao = document.getElementById("pedidoFirebaseId").value;
+      if (idEdicao) {
+        // Atualização
+        await updateDoc(doc(db, "pedidos", idEdicao), {
+          item, op, quantidade, parceiro
+        });
+        alert("Pedido atualizado com sucesso!");
+        btnSubmit.innerText = "Gerar Pedido";
+        btnCancelar.style.display = "none";
+        document.getElementById("pedidoFirebaseId").value = "";
+      } else {
+        // Novo pedido
+        const pedido = { 
+          item, op, quantidade, parceiro, 
+          emailCriador: user.email, status: "Não Liberado", 
+          dataEntrada: new Date().toISOString() 
+        };
+        const idSequencial = await getNextSequentialId();
+        pedido.idSequencial = idSequencial;
+        await addDoc(collection(db, "pedidos"), pedido);
+        alert("Pedido gerado com sucesso! ID: " + idSequencial);
+      }
+
       form.reset();
       carregarPedidos();
     });
 
+    btnCancelar.addEventListener("click", () => {
+      form.reset();
+      btnSubmit.innerText = "Gerar Pedido";
+      btnCancelar.style.display = "none";
+      document.getElementById("pedidoFirebaseId").value = "";
+    });
+
     async function carregarPedidos() {
-      const querySnap = await getDocs(collection(db, "pedidos"));
+      const querySnapshot = await getDocs(collection(db, "pedidos"));
       tabela.innerHTML = "";
-      querySnap.forEach((docSnap) => {
+
+      querySnapshot.forEach((docSnap) => {
         const pedido = docSnap.data();
         const linha = tabela.insertRow();
         linha.innerHTML = `
-          <td>${pedido.idSequencial}</td><td>${pedido.item}</td>
-          <td>${pedido.op}</td><td>${pedido.quantidade}</td>
-          <td>${pedido.parceiro}</td><td>${pedido.status}</td>
+          <td>${pedido.idSequencial || "N/A"}</td>
+          <td>${pedido.item}</td>
+          <td>${pedido.op}</td>
+          <td>${pedido.quantidade}</td>
+          <td>${pedido.parceiro}</td>
+          <td>${pedido.status}</td>
           <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
-          <td><button onclick="abrirChatPedido(${pedido.idSequencial})">💬 Chat</button></td>
+          <td>
+            <button onclick="abrirChatPedido(${pedido.idSequencial})">💬 Chat</button>
+            <button onclick="editarPedido('${docSnap.id}', ${JSON.stringify(pedido).replace(/"/g, '&quot;')})">Editar</button>
+            <button onclick="excluirPedido('${docSnap.id}')">Excluir</button>
+          </td>
         `;
       });
     }
 
+    window.editarPedido = (id, pedido) => {
+      document.getElementById("item").value = pedido.item;
+      document.getElementById("op").value = pedido.op;
+      document.getElementById("quantidade").value = pedido.quantidade;
+      document.getElementById("parceiro").value = pedido.parceiro;
+      document.getElementById("pedidoFirebaseId").value = id;
+      btnSubmit.innerText = "Atualizar Pedido";
+      btnCancelar.style.display = "inline";
+    };
+
+    window.excluirPedido = async (id) => {
+      if (confirm("Tem certeza que deseja excluir este pedido?")) {
+        try {
+          await deleteDoc(doc(db, "pedidos", id));
+          alert("Pedido excluído com sucesso!");
+          carregarPedidos();
+        } catch (error) {
+          console.error(error);
+          alert("Erro ao excluir pedido.");
+        }
+      }
+    };
+
+    // ===== AUTENTICAÇÃO =====
     document.getElementById("loginForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const email = document.getElementById("loginEmail").value;
@@ -179,11 +239,16 @@
     document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
 
     onAuthStateChanged(auth, (user) => {
-      if (user) { document.getElementById("usuarioLogado").innerText = "Logado como: " + user.email; document.getElementById("logoutBtn").style.display = "inline"; carregarPedidos(); }
-      else { document.getElementById("usuarioLogado").innerText = "Não autenticado"; }
+      if (user) {
+        document.getElementById("usuarioLogado").innerText = "Logado como: " + user.email;
+        document.getElementById("logoutBtn").style.display = "inline";
+        carregarPedidos();
+      } else {
+        document.getElementById("usuarioLogado").innerText = "Não autenticado";
+      }
     });
 
-    // ===== POPUP CHAT LOGIC =====
+    // ===== POPUP CHAT =====
     const chatBtn = document.getElementById("chatBtn");
     const chatPopup = document.getElementById("chatPopup");
     const closeChat = document.getElementById("closeChat");
@@ -200,11 +265,19 @@
     let minimized = false;
 
     function updateBadge() {
-      if (unreadCount > 0) { chatBadge.innerText = unreadCount; chatBadge.style.display = "inline-block"; } else { chatBadge.style.display = "none"; }
+      if (unreadCount > 0) { 
+        chatBadge.innerText = unreadCount; 
+        chatBadge.style.display = "inline-block"; 
+      } else { 
+        chatBadge.style.display = "none"; 
+      }
     }
 
     chatBtn.addEventListener("click", () => {
-      if (!chatPedidoAtual) { alert("Selecione um pedido (Abrir Chat) antes de usar o popup."); return; }
+      if (!chatPedidoAtual) { 
+        alert("Selecione um pedido (Abrir Chat) antes de usar o popup."); 
+        return; 
+      }
       unreadCount = 0; updateBadge();
       chatPopup.style.display = "flex";
       carregarChat(chatPedidoAtual);
@@ -214,8 +287,15 @@
 
     minimizeChat.addEventListener("click", () => {
       minimized = !minimized;
-      if (minimized) { chatPopup.style.height = "50px"; chatPopup.querySelector(".chat-mensagens").style.display = "none"; chatPopup.querySelector(".chat-input").style.display = "none"; }
-      else { chatPopup.style.height = "500px"; chatPopup.querySelector(".chat-mensagens").style.display = "block"; chatPopup.querySelector(".chat-input").style.display = "flex"; }
+      if (minimized) {
+        chatPopup.style.height = "50px";
+        chatPopup.querySelector(".chat-mensagens").style.display = "none";
+        chatPopup.querySelector(".chat-input").style.display = "none";
+      } else {
+        chatPopup.style.height = "500px";
+        chatPopup.querySelector(".chat-mensagens").style.display = "block";
+        chatPopup.querySelector(".chat-input").style.display = "flex";
+      }
     });
 
     window.abrirChatPedido = (pedidoId) => {
@@ -252,54 +332,7 @@
         chatMensagens.scrollTop = chatMensagens.scrollHeight;
         if (chatPopup.style.display === "none") { unreadCount++; updateBadge(); }
       });
-    };
-
-     async function carregarPedidos() {
-      const querySnapshot = await getDocs(collection(db, "pedidos"));
-      tabela.innerHTML = "";
-
-      querySnapshot.forEach((docSnap) => {
-        const pedido = docSnap.data();
-        const linha = tabela.insertRow();
-        linha.innerHTML = `
-          <td>${pedido.idSequencial || "N/A"}</td>
-          <td>${pedido.item}</td>
-          <td>${pedido.op}</td>
-          <td>${pedido.quantidade}</td>
-          <td>${pedido.parceiro}</td>
-          <td>${pedido.status}</td>
-          <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
-          <td>
-            <button onclick="editarPedido('${docSnap.id}', ${JSON.stringify(pedido).replace(/"/g, '&quot;')})">Editar</button>
-            <button onclick="excluirPedido('${docSnap.id}')">Excluir</button>
-          </td>
-        `;
-      });
     }
-
-    window.editarPedido = (id, pedido) => {
-      document.getElementById("item").value = pedido.item;
-      document.getElementById("op").value = pedido.op;
-      document.getElementById("quantidade").value = pedido.quantidade;
-      document.getElementById("parceiro").value = pedido.parceiro;
-      document.getElementById("pedidoFirebaseId").value = id;
-      btnSubmit.innerText = "Atualizar Pedido";
-      btnCancelar.style.display = "inline";
-    };
-
-    window.excluirPedido = async (id) => {
-      if (confirm("Tem certeza que deseja excluir este pedido?")) {
-        try {
-          await deleteDoc(doc(db, "pedidos", id));
-          alert("Pedido excluído com sucesso!");
-          carregarPedidos();
-        } catch (error) {
-          console.error(error);
-          alert("Erro ao excluir pedido.");
-        }
-      }
-    }
-
   </script>
 </body>
 </html>
