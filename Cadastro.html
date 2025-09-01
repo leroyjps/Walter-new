@@ -5,195 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cadastro de Itens e Parceiros</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body {
-      font-family: "Poppins", sans-serif;
-      line-height: 1.6;
-      background-color: #080808;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-    }
-
-    header {
-      background-color: #1a1a1a;
-      padding: 1rem;
-      text-align: center;
-    }
-
-    header nav ul {
-      list-style: none;
-      display: flex;
-      justify-content: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      padding: 0;
-      margin: 0;
-    }
-
-    header nav ul li a {
-      color: #00ffff;
-      text-decoration: none;
-      font-weight: bold;
-      padding: 0.5rem 1rem;
-      transition: background-color 0.3s ease;
-      border-radius: 25px;
-    }
-
-    header nav ul li a:hover {
-      background-color: #00ffff;
-      color: #000;
-    }
-
-    .cadastro-section {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 2rem;
-      background-color: #111010;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-
-    .cadastro-section h2 {
-      color: #ffd700;
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .tabs {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .tab {
-      padding: 10px 20px;
-      cursor: pointer;
-      border-radius: 25px;
-      background-color: #333;
-      color: #fff;
-      font-weight: bold;
-      transition: all 0.3s ease;
-    }
-
-    .tab.active {
-      background-color: #00ffff;
-      color: #000;
-    }
-
-    .tab-content {
-      display: none;
-      margin-top: 1rem;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    .cadastro-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .cadastro-form label {
-      font-weight: bold;
-      color: #00ffff;
-    }
-
-    .cadastro-form input,
-    .cadastro-form select {
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #00ffff;
-      background-color: #1a1a1a;
-      color: #fff;
-      font-size: 1rem;
-    }
-
-    .cadastro-form button {
-      padding: 10px 20px;
-      background-color: #00ffff;
-      color: #000;
-      font-weight: bold;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .cadastro-form button:hover {
-      background-color: #ffd700;
-    }
-
-    .upload-container {
-      margin-top: 1rem;
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .upload-container input[type="file"] {
-      border: 1px solid #00ffff;
-      border-radius: 5px;
-      padding: 8px;
-      background-color: #1a1a1a;
-      color: #fff;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 2rem;
-    }
-
-    table th, table td {
-      padding: 10px;
-      border-bottom: 1px solid #444;
-      text-align: left;
-    }
-
-    table th {
-      background-color: #333;
-      color: #ffd700;
-    }
-
-    table tbody tr:hover {
-      background-color: #222;
-    }
-
-    .action-btn {
-      margin-right: 5px;
-      padding: 5px 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .edit-btn {
-      background-color: #ffd700;
-      color: #000;
-    }
-
-    .delete-btn {
-      background-color: #ff4c4c;
-      color: #fff;
-    }
-
-    @media (max-width: 768px) {
-      .cadastro-form {
-        gap: 0.5rem;
-      }
-      table th, table td {
-        font-size: 0.9rem;
-      }
-    }
+    /* Seu CSS permanece igual */
+    body { font-family: "Poppins", sans-serif; background-color: #080808; color:#fff; margin:0; padding:0;}
+    header { background-color:#1a1a1a; padding:1rem; text-align:center;}
+    header nav ul { list-style:none; display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; padding:0; margin:0;}
+    header nav ul li a { color:#00ffff; text-decoration:none; font-weight:bold; padding:0.5rem 1rem; border-radius:25px;}
+    header nav ul li a:hover { background-color:#00ffff; color:#000;}
+    .cadastro-section { max-width:1200px; margin:2rem auto; padding:2rem; background-color:#111010; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+    .cadastro-section h2 { color:#ffd700; text-align:center; margin-bottom:1.5rem;}
+    .tabs { display:flex; justify-content:center; gap:1rem; margin-bottom:1.5rem;}
+    .tab { padding:10px 20px; cursor:pointer; border-radius:25px; background-color:#333; color:#fff; font-weight:bold; transition:all 0.3s ease;}
+    .tab.active { background-color:#00ffff; color:#000;}
+    .tab-content { display:none; margin-top:1rem;}
+    .tab-content.active { display:block;}
+    .cadastro-form { display:flex; flex-direction:column; gap:1rem;}
+    .cadastro-form label { font-weight:bold; color:#00ffff;}
+    .cadastro-form input, .cadastro-form select { padding:10px; border-radius:5px; border:1px solid #00ffff; background-color:#1a1a1a; color:#fff; font-size:1rem;}
+    .cadastro-form button { padding:10px 20px; background-color:#00ffff; color:#000; font-weight:bold; border:none; border-radius:5px; cursor:pointer;}
+    .cadastro-form button:hover { background-color:#ffd700;}
+    .upload-container { margin-top:1rem; display:flex; gap:1rem; flex-wrap:wrap; align-items:center;}
+    .upload-container input[type="file"] { border:1px solid #00ffff; border-radius:5px; padding:8px; background-color:#1a1a1a; color:#fff;}
+    table { width:100%; border-collapse:collapse; margin-top:2rem;}
+    table th, table td { padding:10px; border-bottom:1px solid #444; text-align:left;}
+    table th { background-color:#333; color:#ffd700;}
+    table tbody tr:hover { background-color:#222;}
+    .action-btn { margin-right:5px; padding:5px 10px; border:none; border-radius:5px; cursor:pointer; font-weight:bold;}
+    .edit-btn { background-color:#ffd700; color:#000;}
+    .delete-btn { background-color:#ff4c4c; color:#fff;}
   </style>
 </head>
 <body>
@@ -204,7 +46,7 @@
       <li><a href="index.html">Início</a></li>
       <li><a href="Cadastro.html">Cadastro</a></li>
       <li><a href="relatorio.html">Relatórios</a></li>
-       <li><a href="gerador.html">Gerador</a></li>
+      <li><a href="gerador.html">Gerador</a></li>
     </ul>
   </nav>
 </header>
@@ -274,20 +116,20 @@
 
 <script>
   // =========================
-  // Configuração Firebase
+  // Configuração Firebase Database
   // =========================
-const firebaseConfig = {
+  const firebaseConfig = {
       apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
       authDomain: "walterscheid-estoque.firebaseapp.com",
+      databaseURL: "https://walterscheid-estoque-default-rtdb.firebaseio.com",
       projectId: "walterscheid-estoque",
       storageBucket: "walterscheid-estoque.firebasestorage.app",
       messagingSenderId: "487386736937",
-      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
-      measurementId: "G-9PL8JP0SD4"
-    };
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38"
+  };
 
   firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  const db = firebase.database();
 
   // =========================
   // Tab Switching
@@ -304,21 +146,21 @@ const firebaseConfig = {
   });
 
   // =========================
-  // Funções CRUD
+  // Renderização Tabelas
   // =========================
-  function renderTabela(collectionName, tableId) {
-    db.collection(collectionName).onSnapshot(snapshot => {
-      const tbody = document.querySelector(`#${tableId} tbody`);
+  function renderTabela(path, tableId) {
+    const tbody = document.querySelector(`#${tableId} tbody`);
+    db.ref(path).on("value", snapshot => {
       tbody.innerHTML = "";
-      snapshot.docs.forEach(doc => {
-        const data = doc.data();
+      snapshot.forEach(child => {
+        const data = child.val();
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${data.nome}</td>
           <td>${data.codigo || ""}</td>
           <td>
-            <button class="action-btn edit-btn" onclick="editar('${collectionName}','${doc.id}','${data.nome}','${data.codigo || ''}')">Editar</button>
-            <button class="action-btn delete-btn" onclick="deletar('${collectionName}','${doc.id}')">Excluir</button>
+            <button class="action-btn edit-btn" onclick="editar('${path}','${child.key}','${data.nome}','${data.codigo || ''}')">Editar</button>
+            <button class="action-btn delete-btn" onclick="deletar('${path}','${child.key}')">Excluir</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -326,16 +168,16 @@ const firebaseConfig = {
     });
   }
 
-  function editar(collection, id, nome, codigo) {
+  function editar(path, key, nome, codigo) {
     const novoNome = prompt("Editar Nome:", nome);
     if(novoNome === null) return;
     const novoCodigo = prompt("Editar Código:", codigo);
-    db.collection(collection).doc(id).update({ nome: novoNome, codigo: novoCodigo });
+    db.ref(`${path}/${key}`).update({ nome: novoNome, codigo: novoCodigo });
   }
 
-  function deletar(collection, id) {
+  function deletar(path, key) {
     if(confirm("Deseja realmente excluir?")) {
-      db.collection(collection).doc(id).delete();
+      db.ref(`${path}/${key}`).remove();
     }
   }
 
@@ -346,26 +188,26 @@ const firebaseConfig = {
   // =========================
   // Formulários Manuais
   // =========================
-  document.getElementById("formItens").addEventListener("submit", async e => {
+  document.getElementById("formItens").addEventListener("submit", e => {
     e.preventDefault();
     const nome = document.getElementById("nomeItem").value;
     const codigo = document.getElementById("codigoItem").value;
-    await db.collection("itens").add({ nome, codigo });
+    db.ref("itens").push({ nome, codigo });
     e.target.reset();
   });
 
-  document.getElementById("formParceiros").addEventListener("submit", async e => {
+  document.getElementById("formParceiros").addEventListener("submit", e => {
     e.preventDefault();
     const nome = document.getElementById("nomeParceiro").value;
     const codigo = document.getElementById("codigoParceiro").value;
-    await db.collection("parceiros").add({ nome, codigo });
+    db.ref("parceiros").push({ nome, codigo });
     e.target.reset();
   });
 
   // =========================
   // Upload Excel
   // =========================
-  async function uploadExcel(inputId, collection) {
+  async function uploadExcel(inputId, path) {
     const fileInput = document.getElementById(inputId);
     const file = fileInput.files[0];
     if(!file) return alert("Selecione um arquivo Excel");
@@ -377,10 +219,7 @@ const firebaseConfig = {
       const jsonData = XLSX.utils.sheet_to_json(sheet);
       for(const row of jsonData) {
         if(row.nome) {
-          await db.collection(collection).add({
-            nome: row.nome,
-            codigo: row.codigo || ""
-          });
+          db.ref(path).push({ nome: row.nome, codigo: row.codigo || "" });
         }
       }
       alert("Cadastro em lote realizado!");
