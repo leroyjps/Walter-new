@@ -1,397 +1,226 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cadastro de Itens e Parceiros</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+  <!-- Excel e ZIP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
   <style>
-    body {
-      font-family: "Poppins", sans-serif;
-      line-height: 1.6;
-      background-color: #080808;
-      color: #fff;
-      margin: 0;
-      padding: 0;
-    }
-
-    header {
-      background-color: #1a1a1a;
-      padding: 1rem;
-      text-align: center;
-    }
-
-    header nav ul {
-      list-style: none;
-      display: flex;
-      justify-content: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      padding: 0;
-      margin: 0;
-    }
-
-    header nav ul li a {
-      color: #00ffff;
-      text-decoration: none;
-      font-weight: bold;
-      padding: 0.5rem 1rem;
-      transition: background-color 0.3s ease;
-      border-radius: 25px;
-    }
-
-    header nav ul li a:hover {
-      background-color: #00ffff;
-      color: #000;
-    }
-
-    .cadastro-section {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 2rem;
-      background-color: #111010;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-
-    .cadastro-section h2 {
-      color: #ffd700;
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .tabs {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .tab {
-      padding: 10px 20px;
-      cursor: pointer;
-      border-radius: 25px;
-      background-color: #333;
-      color: #fff;
-      font-weight: bold;
-      transition: all 0.3s ease;
-    }
-
-    .tab.active {
-      background-color: #00ffff;
-      color: #000;
-    }
-
-    .tab-content {
-      display: none;
-      margin-top: 1rem;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    .cadastro-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .cadastro-form label {
-      font-weight: bold;
-      color: #00ffff;
-    }
-
-    .cadastro-form input,
-    .cadastro-form select {
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #00ffff;
-      background-color: #1a1a1a;
-      color: #fff;
-      font-size: 1rem;
-    }
-
-    .cadastro-form button {
-      padding: 10px 20px;
-      background-color: #00ffff;
-      color: #000;
-      font-weight: bold;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .cadastro-form button:hover {
-      background-color: #ffd700;
-    }
-
-    .upload-container {
-      margin-top: 1rem;
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .upload-container input[type="file"] {
-      border: 1px solid #00ffff;
-      border-radius: 5px;
-      padding: 8px;
-      background-color: #1a1a1a;
-      color: #fff;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 2rem;
-    }
-
-    table th, table td {
-      padding: 10px;
-      border-bottom: 1px solid #444;
-      text-align: left;
-    }
-
-    table th {
-      background-color: #333;
-      color: #ffd700;
-    }
-
-    table tbody tr:hover {
-      background-color: #222;
-    }
-
-    .action-btn {
-      margin-right: 5px;
-      padding: 5px 10px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .edit-btn {
-      background-color: #ffd700;
-      color: #000;
-    }
-
-    .delete-btn {
-      background-color: #ff4c4c;
-      color: #fff;
-    }
-
-    @media (max-width: 768px) {
-      .cadastro-form {
-        gap: 0.5rem;
-      }
-      table th, table td {
-        font-size: 0.9rem;
-      }
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #111; color: #fff; }
+    h2 { margin-top: 20px; }
+    form { margin-bottom: 20px; }
+    input { margin: 5px; padding: 8px; border-radius: 4px; border: none; }
+    button { margin: 5px; padding: 8px 15px; border: none; border-radius: 4px; background: #4CAF50; color: #fff; cursor: pointer; }
+    table { width: 100%; margin-top: 10px; border-collapse: collapse; }
+    th, td { border: 1px solid #444; padding: 8px; text-align: left; }
+    th { background: #333; }
+    tr:nth-child(even) { background: #222; }
+    .logout { background: #e74c3c; float: right; }
   </style>
 </head>
 <body>
+  <h1>Cadastro de Itens e Parceiros</h1>
+  <button class="logout" onclick="logout()">Sair</button>
 
-<header>
-  <nav>
-    <ul>
-      <li><a href="index.html">Início</a></li>
-      <li><a href="Cadastro.html">Cadastro</a></li>
-      <li><a href="relatorio.html">Relatórios</a></li>
-       <li><a href="gerador.html">Gerador</a></li>
-    </ul>
-  </nav>
-</header>
+  <!-- Formulário Itens -->
+  <h2>Itens</h2>
+  <form id="formItens">
+    <input type="text" id="nomeItem" placeholder="Nome do item" required>
+    <input type="text" id="codigoItem" placeholder="Código">
+    <button type="submit">Cadastrar Item</button>
+  </form>
+  <input type="file" id="fileItens" accept=".xlsx, .xls">
+  <button onclick="exportar('itens')">Exportar Itens</button>
+  <table id="tabelaItens">
+    <thead><tr><th>Nome</th><th>Código</th></tr></thead>
+    <tbody></tbody>
+  </table>
 
-<section class="cadastro-section">
-  <h2>Cadastro de Itens e Parceiros</h2>
+  <!-- Formulário Parceiros -->
+  <h2>Parceiros</h2>
+  <form id="formParceiros">
+    <input type="text" id="nomeParceiro" placeholder="Nome do parceiro" required>
+    <input type="text" id="codigoParceiro" placeholder="Código">
+    <button type="submit">Cadastrar Parceiro</button>
+  </form>
+  <input type="file" id="fileParceiros" accept=".xlsx, .xls">
+  <button onclick="exportar('parceiros')">Exportar Parceiros</button>
+  <table id="tabelaParceiros">
+    <thead><tr><th>Nome</th><th>Código</th></tr></thead>
+    <tbody></tbody>
+  </table>
 
-  <div class="tabs">
-    <div class="tab active" data-target="itensTab">Itens</div>
-    <div class="tab" data-target="parceirosTab">Parceiros</div>
-  </div>
+  <!-- Exportar Tudo -->
+  <h2>Exportação Geral</h2>
+  <button onclick="exportarTudo()">Exportar Tudo (ZIP)</button>
 
-  <!-- Aba Itens -->
-  <div class="tab-content active" id="itensTab">
-    <form class="cadastro-form" id="formItens">
-      <label for="nomeItem">Nome do Item:</label>
-      <input type="text" id="nomeItem" required />
-      <label for="codigoItem">Código do Item:</label>
-      <input type="text" id="codigoItem" />
-      <button type="submit">Cadastrar Item</button>
-    </form>
-
-    <div class="upload-container">
-      <input type="file" id="excelItens" accept=".xlsx, .xls" />
-      <button id="uploadItensBtn">Cadastrar Itens em Lote</button>
-    </div>
-
-    <table id="tabelaItens">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Código</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <!-- Aba Parceiros -->
-  <div class="tab-content" id="parceirosTab">
-    <form class="cadastro-form" id="formParceiros">
-      <label for="nomeParceiro">Nome do Parceiro:</label>
-      <input type="text" id="nomeParceiro" required />
-      <label for="codigoParceiro">Código (opcional):</label>
-      <input type="text" id="codigoParceiro" />
-      <button type="submit">Cadastrar Parceiro</button>
-    </form>
-
-    <div class="upload-container">
-      <input type="file" id="excelParceiros" accept=".xlsx, .xls" />
-      <button id="uploadParceirosBtn">Cadastrar Parceiros em Lote</button>
-    </div>
-
-    <table id="tabelaParceiros">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Código</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</section>
-
-<script>
-  // =========================
-  // Configuração Firebase
-  // =========================
+  <script>
+    // =========================
+    // Configuração Firebase
+    // =========================
   const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_AUTH_DOMAIN",
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_STORAGE_BUCKET",
-    messagingSenderId: "SEU_SENDER_ID",
-    appId: "SEU_APP_ID"
+    apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+    authDomain: "walterscheid-estoque.firebaseapp.com",
+    databaseURL: "https://walterscheid-estoque-default-rtdb.firebaseio.com",
+    projectId: "walterscheid-estoque",
+    storageBucket: "walterscheid-estoque.appspot.com",
+    messagingSenderId: "487386736937",
+    appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+    measurementId: "G-9PL8JP0SD4"
   };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  // =========================
-  // Tab Switching
-  // =========================
-  const tabs = document.querySelectorAll(".tab");
-  const tabContents = document.querySelectorAll(".tab-content");
-  tabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-      tabs.forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-      tabContents.forEach(tc => tc.classList.remove("active"));
-      document.getElementById(tab.dataset.target).classList.add("active");
+    // 🔐 Só permite usuário logado
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = "login.html";
     });
-  });
 
-  // =========================
-  // Funções CRUD
-  // =========================
-  function renderTabela(collectionName, tableId) {
-    db.collection(collectionName).onSnapshot(snapshot => {
-      const tbody = document.querySelector(`#${tableId} tbody`);
-      tbody.innerHTML = "";
-      snapshot.docs.forEach(doc => {
-        const data = doc.data();
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${data.nome}</td>
-          <td>${data.codigo || ""}</td>
-          <td>
-            <button class="action-btn edit-btn" onclick="editar('${collectionName}','${doc.id}','${data.nome}','${data.codigo || ''}')">Editar</button>
-            <button class="action-btn delete-btn" onclick="deletar('${collectionName}','${doc.id}')">Excluir</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    });
-  }
-
-  function editar(collection, id, nome, codigo) {
-    const novoNome = prompt("Editar Nome:", nome);
-    if(novoNome === null) return;
-    const novoCodigo = prompt("Editar Código:", codigo);
-    db.collection(collection).doc(id).update({ nome: novoNome, codigo: novoCodigo });
-  }
-
-  function deletar(collection, id) {
-    if(confirm("Deseja realmente excluir?")) {
-      db.collection(collection).doc(id).delete();
+    function logout() {
+      auth.signOut();
     }
-  }
 
-  // Render inicial
-  renderTabela("itens", "tabelaItens");
-  renderTabela("parceiros", "tabelaParceiros");
+    // =========================
+    // Função de cadastro único
+    // =========================
+    async function cadastrarUnico(collection, dados) {
+      // Checa duplicado por nome
+      const snapNome = await db.ref(collection).orderByChild("nome").equalTo(dados.nome).once("value");
+      if (snapNome.exists()) {
+        alert(`Já existe em ${collection}: "${dados.nome}"`);
+        return false;
+      }
 
-  // =========================
-  // Formulários Manuais
-  // =========================
-  document.getElementById("formItens").addEventListener("submit", async e => {
-    e.preventDefault();
-    const nome = document.getElementById("nomeItem").value;
-    const codigo = document.getElementById("codigoItem").value;
-    await db.collection("itens").add({ nome, codigo });
-    e.target.reset();
-  });
-
-  document.getElementById("formParceiros").addEventListener("submit", async e => {
-    e.preventDefault();
-    const nome = document.getElementById("nomeParceiro").value;
-    const codigo = document.getElementById("codigoParceiro").value;
-    await db.collection("parceiros").add({ nome, codigo });
-    e.target.reset();
-  });
-
-  // =========================
-  // Upload Excel
-  // =========================
-  async function uploadExcel(inputId, collection) {
-    const fileInput = document.getElementById(inputId);
-    const file = fileInput.files[0];
-    if(!file) return alert("Selecione um arquivo Excel");
-    const reader = new FileReader();
-    reader.onload = async e => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
-      for(const row of jsonData) {
-        if(row.nome) {
-          await db.collection(collection).add({
-            nome: row.nome,
-            codigo: row.codigo || ""
-          });
+      // Checa duplicado por código
+      if (dados.codigo) {
+        const snapCodigo = await db.ref(collection).orderByChild("codigo").equalTo(dados.codigo).once("value");
+        if (snapCodigo.exists()) {
+          alert(`Já existe em ${collection} com código "${dados.codigo}"`);
+          return false;
         }
       }
-      alert("Cadastro em lote realizado!");
-      fileInput.value = "";
-    };
-    reader.readAsArrayBuffer(file);
-  }
 
-  document.getElementById("uploadItensBtn").addEventListener("click", () => uploadExcel("excelItens","itens"));
-  document.getElementById("uploadParceirosBtn").addEventListener("click", () => uploadExcel("excelParceiros","parceiros"));
+      await db.ref(collection).push(dados);
+      return true;
+    }
 
-</script>
+    // =========================
+    // Cadastro manual
+    // =========================
+    document.getElementById("formItens").addEventListener("submit", async e => {
+      e.preventDefault();
+      const nome = document.getElementById("nomeItem").value.trim();
+      const codigo = document.getElementById("codigoItem").value.trim();
+      const sucesso = await cadastrarUnico("itens", { nome, codigo });
+      if (sucesso) e.target.reset();
+    });
 
+    document.getElementById("formParceiros").addEventListener("submit", async e => {
+      e.preventDefault();
+      const nome = document.getElementById("nomeParceiro").value.trim();
+      const codigo = document.getElementById("codigoParceiro").value.trim();
+      const sucesso = await cadastrarUnico("parceiros", { nome, codigo });
+      if (sucesso) e.target.reset();
+    });
+
+    // =========================
+    // Listagem em tempo real
+    // =========================
+    function listar(collection, tabelaId) {
+      db.ref(collection).on("value", snapshot => {
+        const tbody = document.querySelector(`#${tabelaId} tbody`);
+        tbody.innerHTML = "";
+        snapshot.forEach(child => {
+          const { nome, codigo } = child.val();
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${nome}</td><td>${codigo || ""}</td>`;
+          tbody.appendChild(tr);
+        });
+      });
+    }
+    listar("itens", "tabelaItens");
+    listar("parceiros", "tabelaParceiros");
+
+    // =========================
+    // Importação via Excel
+    // =========================
+    function importarExcel(fileInput, collection) {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async e => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet);
+
+        for (const row of rows) {
+          if (row.nome) {
+            await cadastrarUnico(collection, {
+              nome: row.nome,
+              codigo: row.codigo || ""
+            });
+          }
+        }
+        alert("Importação concluída!");
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    document.getElementById("fileItens").addEventListener("change", e => importarExcel(e.target, "itens"));
+    document.getElementById("fileParceiros").addEventListener("change", e => importarExcel(e.target, "parceiros"));
+
+    // =========================
+    // Exportação separada
+    // =========================
+    async function exportar(collection) {
+      const snapshot = await db.ref(collection).once("value");
+      const dados = [];
+      snapshot.forEach(child => dados.push(child.val()));
+      if (dados.length === 0) return alert("Nenhum dado para exportar.");
+
+      const ws = XLSX.utils.json_to_sheet(dados);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, collection);
+      XLSX.writeFile(wb, `${collection}.xlsx`);
+    }
+
+    // =========================
+    // Exportação ZIP
+    // =========================
+    async function exportarTudo() {
+      const zip = new JSZip();
+      const colecoes = ["itens", "parceiros"];
+
+      for (const col of colecoes) {
+        const snapshot = await db.ref(col).once("value");
+        const dados = [];
+        snapshot.forEach(child => dados.push(child.val()));
+
+        if (dados.length > 0) {
+          const ws = XLSX.utils.json_to_sheet(dados);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, col);
+          const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+          zip.file(`${col}.xlsx`, buffer);
+        }
+      }
+
+      zip.generateAsync({ type: "blob" }).then(content => {
+        saveAs(content, "exportacao.zip");
+      });
+    }
+  </script>
 </body>
 </html>
