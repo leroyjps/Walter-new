@@ -35,6 +35,7 @@
     </div>
   </main>
   <footer><p>&copy; 2024 Walterscheid</p></footer>
+
 <!-- Chat popup button + window -->
 <button id="chatBtn" title="Abrir chat">💬 <span class="badge" id="chatBadge"></span></button>
 
@@ -82,6 +83,28 @@
     async function carregarRespostas(pedidoId){ const q = query(collection(db,"respostasPedidos"), where("pedidoId","==",pedidoId), orderBy("data","asc")); const qs = await getDocs(q); const lista=document.getElementById("mensagensLista"); lista.innerHTML=""; qs.forEach(d=>{ const r=d.data(); const li=document.createElement("li"); const isCriador = r.autor && r.autor.includes && r.autor.includes("@"); li.classList.add("mensagem", isCriador ? "criador" : "estoque"); li.innerHTML = "<div class='bolha'>" + r.mensagem + "<small>" + r.autor + " - " + new Date(r.data).toLocaleString() + "</small></div>"; lista.appendChild(li); }); lista.scrollTop = lista.scrollHeight; }
     document.getElementById("btnEnviarResposta").addEventListener("click", async ()=>{ const pedidoId = parseInt(document.getElementById("respostaPedidoId").innerText); const mensagem = document.getElementById("respostaTexto").value.trim(); if(!mensagem){alert("Digite uma resposta.");return;} const user = auth.currentUser; const autor = user && user.email ? user.email : "criador"; await addDoc(collection(db,"respostasPedidos"), { pedidoId, autor, mensagem, data: new Date().toISOString() }); document.getElementById("respostaTexto").value=""; await carregarRespostas(pedidoId); });
     window.onload = ()=>{ fetchPedidos(); setInterval(fetchPedidos,10000); };
+    
+     document.getElementById("page-info").innerText =
+        `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
+      document.getElementById("prev-btn").disabled = currentPage === 1;
+      document.getElementById("next-btn").disabled = end >= pedidos.length;
+     
+
+    window.previousPage = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderPedidos();
+      }
+    };
+
+    window.nextPage = () => {
+      if (currentPage * itemsPerPage < pedidos.length) {
+        currentPage++;
+        renderPedidos();
+      }
+    };
+
+    
     // Popup logic
     const chatBtn = document.getElementById("chatBtn");
     const chatPopup = document.getElementById("chatPopup");
@@ -105,6 +128,9 @@
     window.abrirChatPedido = (pedidoId)=>{ chatPedidoAtual = pedidoId; chatPedidoIdSpan.innerText = pedidoId; chatPopup.style.display = "flex"; carregarChat(pedidoId); };
     enviarMsg.addEventListener("click", async ()=>{ if(!chatPedidoAtual) return; const mensagem = chatInput.value.trim(); if(!mensagem) return; const user = auth.currentUser; const autor = user && user.email ? user.email : "criador"; await addDoc(collection(db,"respostasPedidos"), { pedidoId: chatPedidoAtual, autor, mensagem, data: new Date().toISOString() }); chatInput.value = ""; });
     function carregarChat(pedidoId){ chatMensagens.innerHTML = ""; if(unsubscribe) unsubscribe(); const q = query(collection(db,"respostasPedidos"), where("pedidoId","==",pedidoId), orderBy("data","asc")); unsubscribe = onSnapshot(q, (snapshot)=>{ chatMensagens.innerHTML = ""; snapshot.forEach(docSnap=>{ const r = docSnap.data(); const div = document.createElement("div"); const isCriador = r.autor && r.autor.includes && r.autor.includes("@"); div.className = "mensagem " + (isCriador ? "criador" : "estoque"); div.innerHTML = "<div class='bolha'>" + r.mensagem + "<small>" + r.autor + " - " + new Date(r.data).toLocaleString() + "</small></div>"; chatMensagens.appendChild(div); }); chatMensagens.scrollTop = chatMensagens.scrollHeight; if(chatPopup.style.display === "none"){ unreadCount++; updateBadge(); } }); }
+  
+  
+  
   </script>
 </body>
 </html>
