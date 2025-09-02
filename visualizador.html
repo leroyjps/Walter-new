@@ -33,6 +33,26 @@
       <textarea id="respostaTexto" rows="3" placeholder="Digite sua resposta"></textarea><br>
       <button id="btnEnviarResposta">Enviar</button> <button onclick="fecharResposta()">Fechar</button>
     </div>
+    <section>
+  <h1>Visualizar Pedidos</h1>
+  <table id="pedidoTable">
+    <thead>
+      <tr>
+        <th>ID</th><th>Item</th><th>Op</th><th>Quantidade</th>
+        <th>Parceiro</th><th>Status</th><th>Data</th><th>Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- 🔽 Controles de paginação -->
+  <div id="pagination" style="margin-top:20px; text-align:center;">
+    <button id="prev-btn" onclick="previousPage()">Anterior</button>
+    <span id="page-info"></span>
+    <button id="next-btn" onclick="nextPage()">Próximo</button>
+  </div>
+</section>
+
   </main>
   <footer><p>&copy; 2024 Walterscheid</p></footer>
 
@@ -83,26 +103,36 @@
     async function carregarRespostas(pedidoId){ const q = query(collection(db,"respostasPedidos"), where("pedidoId","==",pedidoId), orderBy("data","asc")); const qs = await getDocs(q); const lista=document.getElementById("mensagensLista"); lista.innerHTML=""; qs.forEach(d=>{ const r=d.data(); const li=document.createElement("li"); const isCriador = r.autor && r.autor.includes && r.autor.includes("@"); li.classList.add("mensagem", isCriador ? "criador" : "estoque"); li.innerHTML = "<div class='bolha'>" + r.mensagem + "<small>" + r.autor + " - " + new Date(r.data).toLocaleString() + "</small></div>"; lista.appendChild(li); }); lista.scrollTop = lista.scrollHeight; }
     document.getElementById("btnEnviarResposta").addEventListener("click", async ()=>{ const pedidoId = parseInt(document.getElementById("respostaPedidoId").innerText); const mensagem = document.getElementById("respostaTexto").value.trim(); if(!mensagem){alert("Digite uma resposta.");return;} const user = auth.currentUser; const autor = user && user.email ? user.email : "criador"; await addDoc(collection(db,"respostasPedidos"), { pedidoId, autor, mensagem, data: new Date().toISOString() }); document.getElementById("respostaTexto").value=""; await carregarRespostas(pedidoId); });
     window.onload = ()=>{ fetchPedidos(); setInterval(fetchPedidos,10000); };
-    
-     document.getElementById("page-info").innerText =
-        `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
-      document.getElementById("prev-btn").disabled = currentPage === 1;
-      document.getElementById("next-btn").disabled = end >= pedidos.length;
-     
+    function renderPedidos() {
+  const tbody = document.querySelector("#pedidoTable tbody");
+  tbody.innerHTML = "";
 
-    window.previousPage = () => {
-      if (currentPage > 1) {
-        currentPage--;
-        renderPedidos();
-      }
-    };
+  const start = (currentPage - 1) * itemsPerPage;
+  const pagePedidos = pedidos.slice(start, start + itemsPerPage);
 
-    window.nextPage = () => {
-      if (currentPage * itemsPerPage < pedidos.length) {
-        currentPage++;
-        renderPedidos();
-      }
-    };
+  pagePedidos.forEach((pedido, index) => {
+    const linha = tbody.insertRow();
+    linha.innerHTML = `
+      <td>${pedido.idSequencial || (start + index + 1)}</td>
+      <td>${pedido.item}</td>
+      <td>${pedido.op}</td>
+      <td>${pedido.quantidade}</td>
+      <td>${pedido.parceiro}</td>
+      <td>${pedido.status}</td>
+      <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
+      <td>
+        <button onclick="abrirResposta(${pedido.idSequencial})">Responder</button>
+        <button onclick="abrirChatPedido(${pedido.idSequencial})">Popup</button>
+      </td>
+    `;
+  });
+
+  // Atualiza paginação
+  const totalPages = Math.ceil(pedidos.length / itemsPerPage);
+  document.getElementById("page-info").innerText = `Página ${currentPage} de ${totalPages}`;
+  document.getElementById("prev-btn").disabled = currentPage === 1;
+  document.getElementById("next-btn").disabled = currentPage === totalPages;
+}
 
     
     // Popup logic
