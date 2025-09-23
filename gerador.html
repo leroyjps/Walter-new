@@ -4,8 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gerar Pedidos - Walterscheid Powertrain Group</title>
- <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .highlight {
+      animation: highlightAnim 2s ease;
+    }
+    @keyframes highlightAnim {
+      0% { background-color: #d4edda; }
+      100% { background-color: transparent; }
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -71,7 +80,7 @@
         <thead>
           <tr>
             <th>ID</th><th>Item</th><th>OP</th><th>Quantidade</th>
-            <th>Parceiro</th><th>Status</th><th>Data</th><th>Ações</th>
+            <th>Parceiro</th><th>Status</th><th>Data Entrada</th><th>Última Modificação</th><th>Ações</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -83,7 +92,6 @@
 
   <!-- Chat popup button + window -->
   <button id="chatBtn" title="Abrir chat">💬 <span class="badge" id="chatBadge"></span></button>
-
   <div id="chatPopup" role="dialog" aria-hidden="true">
     <header>
       <h3>Chat Pedido <span id="chatPedidoId"></span></h3>
@@ -150,25 +158,22 @@
 
       const idEdicao = document.getElementById("pedidoFirebaseId").value;
       if (idEdicao) {
-        // Atualização
         await updateDoc(doc(db, "pedidos", idEdicao), {
           item, op, quantidade, parceiro,
-          dataModificacao: new Date().toISOString() // 👈 NOVO
+          dataModificacao: new Date().toISOString()
         });
         alert("Pedido atualizado com sucesso!");
         btnSubmit.innerText = "Gerar Pedido";
         btnCancelar.style.display = "none";
         document.getElementById("pedidoFirebaseId").value = "";
       } else {
-        // Novo pedido
+        const idSequencial = await getNextSequentialId();
         const pedido = { 
-          item, op, quantidade, parceiro, 
+          idSequencial, item, op, quantidade, parceiro, 
           emailCriador: user.email, status: "Não Liberado", 
           dataEntrada: new Date().toISOString(),
-          dataModificacao: new Date().toISOString() // 👈 NOVO
+          dataModificacao: new Date().toISOString()
         };
-        const idSequencial = await getNextSequentialId();
-        pedido.idSequencial = idSequencial;
         await addDoc(collection(db, "pedidos"), pedido);
         alert("Pedido gerado com sucesso! ID: " + idSequencial);
       }
@@ -186,10 +191,15 @@
 
     async function carregarPedidos() {
       const querySnapshot = await getDocs(collection(db, "pedidos"));
+      let pedidos = [];
+      querySnapshot.forEach((docSnap) => {
+        pedidos.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      pedidos.sort((a, b) => new Date(b.dataModificacao || b.dataEntrada) - new Date(a.dataModificacao || a.dataEntrada));
       tabela.innerHTML = "";
 
-      querySnapshot.forEach((docSnap) => {
-        const pedido = docSnap.data();
+      pedidos.forEach((pedido) => {
         const linha = tabela.insertRow();
         linha.innerHTML = `
           <td>${pedido.idSequencial || "N/A"}</td>
@@ -199,10 +209,11 @@
           <td>${pedido.parceiro}</td>
           <td>${pedido.status}</td>
           <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
+          <td>${pedido.dataModificacao ? new Date(pedido.dataModificacao).toLocaleString() : '-'}</td>
           <td>
             <button onclick="abrirChatPedido(${pedido.idSequencial})">💬 Chat</button>
-            <button onclick="editarPedido('${docSnap.id}', ${JSON.stringify(pedido).replace(/"/g, '&quot;')})">Editar</button>
-            <button onclick="excluirPedido('${docSnap.id}')">Excluir</button>
+            <button onclick='editarPedido("${pedido.id}", ${JSON.stringify(pedido).replace(/"/g, '&quot;')})'>Editar</button>
+            <button onclick='excluirPedido("${pedido.id}")'>Excluir</button>
           </td>
         `;
       });
