@@ -67,9 +67,7 @@
             <th>Data de Entrada</th>
           </tr>
         </thead>
-        <tbody>
-          <!-- Os pedidos serão inseridos aqui via JavaScript -->
-        </tbody>
+        <tbody></tbody>
       </table>
 
       <div class="pagination">
@@ -121,42 +119,19 @@
     let currentPage = 1;
     const itemsPerPage = 10;
 
-    // Função para obter o próximo ID sequencial
-    async function getNextSequentialId() {
-      try {
-        const counterRef = doc(db, "counters", "pedidos");
-        const counterDoc = await getDoc(counterRef);
-        
-        if (counterDoc.exists()) {
-          const lastId = counterDoc.data().lastId;
-          const newId = lastId + 1;
-          await updateDoc(counterRef, { lastId: newId });
-          return newId;
-        } else {
-          // Primeira execução - criar o contador começando de 32 (já existem 31 pedidos)
-          await setDoc(counterRef, { lastId: 32 });
-          return 32;
-        }
-      } catch (error) {
-        console.error("Erro ao obter ID sequencial:", error);
-        throw error;
-      }
-    }
-
     async function buscarPedidos() {
       const querySnapshot = await getDocs(collection(db, "pedidos"));
       pedidos = [];
       querySnapshot.forEach((doc) => {
         pedidos.push({ id: doc.id, ...doc.data() });
       });
-      
-      // MODIFICAÇÃO AQUI: Ordenar por data de entrada (mais recente primeiro)
+
       pedidos.sort((a, b) => {
         const dataA = new Date(a.dataEntrada);
         const dataB = new Date(b.dataEntrada);
-        return dataB - dataA; // Ordem decrescente (mais recente primeiro)
+        return dataB - dataA;
       });
-      
+
       atualizarTabela();
     }
 
@@ -170,7 +145,7 @@
       pagePedidos.forEach((pedido) => {
         const linha = tbody.insertRow();
         const dataEntrada = new Date(pedido.dataEntrada);
-        
+
         linha.innerHTML = `
           <td>${pedido.idSequencial || "N/A"}</td>
           <td>${pedido.item}</td>
@@ -233,7 +208,8 @@
         const atualizacao = {
           status: novoStatus,
           operador: nomeOperador,
-          comentario: comentarioNovo
+          comentario: comentarioNovo,
+          dataModificacao: new Date().toISOString() // 👈 NOVO
         };
 
         if (novoStatus === "Liberado") {
@@ -242,17 +218,14 @@
 
         await updateDoc(pedidoDoc, atualizacao);
 
-        // Envia e-mail via EmailJS
-     emailjs.send("service_how3gpr", "template_nffl5al", {
-  to_email: pedido.emailCriador,
-  id: pedido.idSequencial,
-  item: pedido.item,
-  status: novoStatus,
-  operador: nomeOperador,
-  comentario: comentarioNovo
-})
-
-.then(() => {
+        emailjs.send("service_how3gpr", "template_nffl5al", {
+          to_email: pedido.emailCriador,
+          id: pedido.idSequencial,
+          item: pedido.item,
+          status: novoStatus,
+          operador: nomeOperador,
+          comentario: comentarioNovo
+        }).then(() => {
           console.log("Email enviado com sucesso!");
         }).catch((error) => {
           console.error("Erro ao enviar email:", error);

@@ -152,7 +152,8 @@
       if (idEdicao) {
         // Atualização
         await updateDoc(doc(db, "pedidos", idEdicao), {
-          item, op, quantidade, parceiro
+          item, op, quantidade, parceiro,
+          dataModificacao: new Date().toISOString() // 👈 NOVO
         });
         alert("Pedido atualizado com sucesso!");
         btnSubmit.innerText = "Gerar Pedido";
@@ -163,7 +164,8 @@
         const pedido = { 
           item, op, quantidade, parceiro, 
           emailCriador: user.email, status: "Não Liberado", 
-          dataEntrada: new Date().toISOString() 
+          dataEntrada: new Date().toISOString(),
+          dataModificacao: new Date().toISOString() // 👈 NOVO
         };
         const idSequencial = await getNextSequentialId();
         pedido.idSequencial = idSequencial;

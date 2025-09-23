@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visualizar Pedidos - Walterscheid Powertrain Group</title>
+  <title>Gerar Pedido - Walterscheid Powertrain Group</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    /* Destaque temporário da linha alterada */
     .highlight {
       animation: highlightAnim 2s ease;
     }
@@ -20,69 +19,73 @@
 <body>
   <header>
     <nav>
-      <div id="title"><h1>Walterscheid Powertrain Group</h1></div>
+      <div id="title">
+        <h1>Walterscheid Powertrain Group</h1>
+      </div>
       <ul>
         <li><a href="index.html">Home</a></li>
+        <li><a href="gerador.html">Gerar Pedido</a></li>
         <li><a href="visualizador.html">Visualizar Pedidos</a></li>
         <li><a href="atualizar.html">Atualizar Pedidos</a></li>
         <li><a href="relatorio.html">Relatorio</a></li>
-        <li><a href="chat.html">Meu Chat</a></li>
       </ul>
     </nav>
   </header>
 
   <main>
     <section>
-      <h1>Visualizar Pedidos</h1>
+      <h1>Gerar Pedido</h1>
+      <form id="pedidoForm">
+        <label for="item">Item:</label>
+        <input type="text" id="item" required />
+
+        <label for="op">Ordem de Produção (OP):</label>
+        <input type="text" id="op" required />
+
+        <label for="quantidade">Quantidade:</label>
+        <input type="number" id="quantidade" required />
+
+        <label for="parceiro">Parceiro de Negócio:</label>
+        <input type="text" id="parceiro" required />
+
+        <button type="submit">Salvar Pedido</button>
+      </form>
+
+      <h2>Pedidos Recentes</h2>
       <table id="pedidoTable">
         <thead>
           <tr>
-            <th>ID</th><th>Item</th><th>Op</th><th>Quantidade</th>
-            <th>Parceiro</th><th>Status</th><th>Data</th><th>Ações</th>
+            <th>ID</th>
+            <th>Item</th>
+            <th>OP</th>
+            <th>Quantidade</th>
+            <th>Parceiro</th>
+            <th>Status</th>
+            <th>Data Entrada</th>
+            <th>Última Modificação</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
-      <div class="pagination">
-        <button id="prev-btn" onclick="previousPage()">Anterior</button>
-        <span id="page-info"></span>
-        <button id="next-btn" onclick="nextPage()">Próxima</button>
-      </div>
     </section>
-
-    <div id="respostaBox" class="resposta-container" style="display:none; margin-top:20px; padding:10px;">
-      <h3>Responder Pedido <span id="respostaPedidoId"></span></h3>
-      <div class="chat-mensagens"><ul id="mensagensLista"></ul></div>
-      <textarea id="respostaTexto" rows="3" placeholder="Digite sua resposta"></textarea><br>
-      <button id="btnEnviarResposta">Enviar</button> <button onclick="fecharResposta()">Fechar</button>
-    </div>
   </main>
 
-  <footer><p>&copy; 2024 Walterscheid</p></footer>
-
-  <!-- Chat popup button + window -->
-  <button id="chatBtn" title="Abrir chat">💬 <span class="badge" id="chatBadge"></span></button>
-  <div id="chatPopup" role="dialog" aria-hidden="true">
-    <header>
-      <h3>Chat Pedido <span id="chatPedidoId"></span></h3>
-      <div>
-        <button id="minimizeChat" aria-label="Minimizar">_</button>
-        <button id="closeChat" aria-label="Fechar chat">&times;</button>
-      </div>
-    </header>
-    <div class="chat-mensagens" id="chatMensagens"></div>
-    <div class="chat-input">
-      <textarea id="chatInput" rows="1" placeholder="Digite uma mensagem..."></textarea>
-      <button id="enviarMsg">➤</button>
-    </div>
-  </div>
-
-  <audio id="notificationSound" src="notification.mp3" preload="auto"></audio>
+  <footer>
+    <p>&copy; 2024 Walterscheid</p>
+  </footer>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, query, orderBy, where, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      updateDoc,
+      doc,
+      getDoc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
@@ -96,128 +99,95 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth(app);
 
     let pedidos = [];
-    let currentPage = 1;
-    const itemsPerPage = 10;
-    const notificationSound = document.getElementById("notificationSound");
 
-    function renderPedidos(highlightId = null) {
+    // Função para obter próximo ID sequencial
+    async function getNextSequentialId() {
+      const counterRef = doc(db, "counters", "pedidos");
+      const counterDoc = await getDoc(counterRef);
+
+      if (counterDoc.exists()) {
+        const lastId = counterDoc.data().lastId;
+        const newId = lastId + 1;
+        await updateDoc(counterRef, { lastId: newId });
+        return newId;
+      } else {
+        await setDoc(counterRef, { lastId: 1 });
+        return 1;
+      }
+    }
+
+    document.getElementById("pedidoForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const item = document.getElementById("item").value.trim();
+      const op = document.getElementById("op").value.trim();
+      const quantidade = parseInt(document.getElementById("quantidade").value.trim());
+      const parceiro = document.getElementById("parceiro").value.trim();
+
+      try {
+        const idSequencial = await getNextSequentialId();
+        const novoPedido = {
+          idSequencial,
+          item,
+          op,
+          quantidade,
+          parceiro,
+          status: "Pendente",
+          dataEntrada: new Date().toISOString(),
+          dataModificacao: new Date().toISOString()
+        };
+
+        await addDoc(collection(db, "pedidos"), novoPedido);
+        alert("Pedido criado com sucesso!");
+        document.getElementById("pedidoForm").reset();
+        buscarPedidos();
+      } catch (error) {
+        console.error("Erro ao salvar pedido:", error);
+        alert("Erro ao salvar pedido.");
+      }
+    });
+
+    async function buscarPedidos() {
+      const querySnapshot = await getDocs(collection(db, "pedidos"));
+      pedidos = [];
+      querySnapshot.forEach((doc) => {
+        pedidos.push({ id: doc.id, ...doc.data() });
+      });
+
+      pedidos.sort((a, b) => {
+        const dataA = new Date(a.dataModificacao || a.dataEntrada);
+        const dataB = new Date(b.dataModificacao || b.dataEntrada);
+        return dataB - dataA;
+      });
+
+      atualizarTabela();
+    }
+
+    function atualizarTabela(highlightId = null) {
       const tbody = document.querySelector("#pedidoTable tbody");
       tbody.innerHTML = "";
-      const start = (currentPage - 1) * itemsPerPage;
-      const pagePedidos = pedidos.slice(start, start + itemsPerPage);
-      pagePedidos.forEach((pedido, index) => {
+
+      pedidos.forEach((pedido) => {
         const linha = tbody.insertRow();
         linha.innerHTML = `
-          <td>${pedido.idSequencial || (start + index + 1)}</td>
+          <td>${pedido.idSequencial}</td>
           <td>${pedido.item}</td>
           <td>${pedido.op}</td>
           <td>${pedido.quantidade}</td>
           <td>${pedido.parceiro}</td>
           <td>${pedido.status}</td>
           <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
-          <td>
-            <button onclick='abrirResposta(${pedido.idSequencial})'>Responder</button>
-            <button onclick='abrirChatPedido(${pedido.idSequencial})'>Popup</button>
-          </td>
+          <td>${pedido.dataModificacao ? new Date(pedido.dataModificacao).toLocaleString() : '-'}</td>
         `;
         if (highlightId && highlightId === pedido.idSequencial) {
           linha.classList.add("highlight");
         }
       });
-
-      document.getElementById("page-info").innerText = `Página ${currentPage} de ${Math.ceil(pedidos.length/itemsPerPage)}`;
-      document.getElementById("prev-btn").disabled = currentPage === 1;
-      document.getElementById("next-btn").disabled = currentPage * itemsPerPage >= pedidos.length;
     }
 
-    window.previousPage = () => {
-      if (currentPage > 1) { currentPage--; renderPedidos(); }
-    };
-
-    window.nextPage = () => {
-      if (currentPage * itemsPerPage < pedidos.length) { currentPage++; renderPedidos(); }
-    };
-
-    function listenPedidos() {
-      const q = query(collection(db, "pedidos"), orderBy("idSequencial", "desc"));
-      onSnapshot(q, (snapshot) => {
-        let highlightId = null;
-        snapshot.docChanges().forEach(change => {
-          const data = change.doc.data();
-          const idSeq = data.idSequencial;
-          if (change.type === "added" || change.type === "modified") {
-            highlightId = idSeq;  // destacamos o último adicionado ou modificado
-            notificationSound.play();
-          }
-        });
-        pedidos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderPedidos(highlightId);
-      });
-    }
-
-    window.abrirResposta = async (pedidoId) => {
-      document.getElementById("respostaBox").style.display = "block";
-      document.getElementById("respostaPedidoId").innerText = pedidoId;
-      document.getElementById("respostaTexto").value = "";
-      await carregarRespostas(pedidoId);
-    };
-
-    window.fecharResposta = () => { document.getElementById("respostaBox").style.display = "none"; };
-
-    async function carregarRespostas(pedidoId) {
-      const q = query(collection(db, "respostasPedidos"), where("pedidoId", "==", pedidoId), orderBy("data", "asc"));
-      const qs = await getDocs(q);
-      const lista = document.getElementById("mensagensLista");
-      lista.innerHTML = "";
-      qs.forEach(d => {
-        const r = d.data();
-        const li = document.createElement("li");
-        const isCriador = r.autor && r.autor.includes("@");
-        li.classList.add("mensagem", isCriador ? "criador" : "estoque");
-        li.innerHTML = `<div class='bolha'>${r.mensagem}<small>${r.autor} - ${new Date(r.data).toLocaleString()}</small></div>`;
-        lista.appendChild(li);
-      });
-      lista.scrollTop = lista.scrollHeight;
-    }
-
-    document.getElementById("btnEnviarResposta").addEventListener("click", async () => {
-      const pedidoId = parseInt(document.getElementById("respostaPedidoId").innerText);
-      const mensagem = document.getElementById("respostaTexto").value.trim();
-      if (!mensagem) { alert("Digite uma resposta."); return; }
-      const user = auth.currentUser;
-      const autor = user && user.email ? user.email : "criador";
-      await addDoc(collection(db, "respostasPedidos"), { pedidoId, autor, mensagem, data: new Date().toISOString() });
-      document.getElementById("respostaTexto").value = "";
-      await carregarRespostas(pedidoId);
-    });
-
-    // Chat popup (mantido igual)
-    const chatBtn = document.getElementById("chatBtn");
-    const chatPopup = document.getElementById("chatPopup");
-    const closeChat = document.getElementById("closeChat");
-    const minimizeChat = document.getElementById("minimizeChat");
-    const chatMensagens = document.getElementById("chatMensagens");
-    const chatInput = document.getElementById("chatInput");
-    const enviarMsg = document.getElementById("enviarMsg");
-    const chatBadge = document.getElementById("chatBadge");
-    const chatPedidoIdSpan = document.getElementById("chatPedidoId");
-    let chatPedidoAtual = null;
-    let unsubscribe = null;
-    let unreadCount = 0;
-    let minimized = false;
-
-    function updateBadge(){ if(unreadCount>0){ chatBadge.innerText=unreadCount; chatBadge.style.display="inline-block"; } else { chatBadge.style.display="none"; } }
-    chatBtn.addEventListener("click", ()=>{ if(!chatPedidoAtual){ alert("Selecione um pedido (Abrir Chat) antes de usar o popup."); return;} unreadCount=0; updateBadge(); chatPopup.style.display="flex"; carregarChat(chatPedidoAtual); });
-    closeChat.addEventListener("click", ()=>{ chatPopup.style.display="none"; });
-    minimizeChat.addEventListener("click", ()=>{ minimized=!minimized; if(minimized){ chatPopup.style.height="50px"; chatPopup.querySelector(".chat-mensagens").style.display="none"; chatPopup.querySelector(".chat-input").style.display="none"; } else { chatPopup.style.height="500px"; chatPopup.querySelector(".chat-mensagens").style.display="block"; chatPopup.querySelector(".chat-input").style.display="flex"; } });
-    window.abrirChatPedido = (pedidoId)=>{ chatPedidoAtual=pedidoId; chatPedidoIdSpan.innerText=pedidoId; chatPopup.style.display="flex"; carregarChat(pedidoId); };
-    enviarMsg.addEventListener("click", async ()=>{ if(!chatPedidoAtual) return; const mensagem=chatInput.value.trim(); if(!mensagem) return; const user=auth.currentUser; const autor=user && user.email ? user.email : "criador"; await addDoc(collection(db,"respostasPedidos"), { pedidoId: chatPedidoAtual, autor, mensagem, data: new Date().toISOString() }); chatInput.value=""; });
-    function carregarChat(pedidoId){ chatMensagens.innerHTML=""; if(unsubscribe) unsubscribe(); const q=query(collection(db,"respostasPedidos"), where("pedidoId","==",pedidoId), orderBy("data","asc")); unsubscribe = onSnapshot(q, snapshot=>{ chatMensagens.innerHTML=""; snapshot.forEach(docSnap=>{ const r=docSnap.data(); const div=document.createElement("div"); const isCriador=r.autor && r.autor.includes && r.autor.includes("@"); div.className="mensagem " + (isCriador ? "criador":"estoque"); div.innerHTML=`<div class='bolha'>${r.mensagem}<small>${r.autor} - ${new Date(r.data).toLocaleString()}</small></div>`; chatMensagens.appendChild(div); }); chatMensagens.scrollTop=chatMensagens.scrollHeight; if(chatPopup.style.display==="none"){ unreadCount++; updateBadge(); } }); }
-
-    window.onload = () => { listenPedidos(); };
+    window.onload = buscarPedidos;
   </script>
 </body>
 </html>
