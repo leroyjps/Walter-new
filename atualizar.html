@@ -117,7 +117,7 @@
 
     let pedidos = [];
     let currentPage = 1;
-    const itemsPerPage = 10;
+    const itemsPerPage = 20;
 
     async function buscarPedidos() {
       const querySnapshot = await getDocs(collection(db, "pedidos"));
