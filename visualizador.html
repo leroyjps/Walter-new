@@ -9,7 +9,7 @@
   <style>
     /* Destaque temporário da linha alterada */
     .highlight {
-      animation: highlightAnim 2s ease;
+      animation: highlightAnim 4s ease;
     }
     @keyframes highlightAnim {
       0% { background-color: #d4edda; }
@@ -80,7 +80,7 @@
     </div>
   </div>
 
-  <audio id="notificationSound" src="notification.mp3" preload="auto"></audio>
+  <audio id="notificationSound" src="/components/audio/alerta.mp3" preload="auto"></audio>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
