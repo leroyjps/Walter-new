@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Impressões — Almox WPG</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root { --bg:#f7f7f8; --card:#fff; --txt:#1b1b1f; --sub:#61646b; --borda:#e5e7eb; --pri:#111; --acc:#f9c300; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:Poppins, Arial, sans-serif; background:var(--bg); color:var(--txt); }
+    header nav { background:#fff; border-bottom:1px solid var(--borda); }
+    header nav .wrap { max-width:1200px; margin:0 auto; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
+    header nav h1 { font-size:18px; margin:0; }
+    header nav ul { list-style:none; margin:0; padding:0; display:flex; gap:12px; }
+    header nav a { text-decoration:none; color:var(--txt); padding:6px 10px; border-radius:8px; }
+    header nav a:hover { background:#f2f2f2; }
+
+    main { max-width:1200px; margin:24px auto; padding:0 16px; }
+    .toolbar, .panel { background:var(--card); border:1px solid var(--borda); border-radius:12px; padding:16px; }
+    .toolbar { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+    .toolbar .row { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+    label { font-size:12px; color:var(--sub); display:block; margin-bottom:4px; }
+    input[type="text"], input[type="number"], select { padding:8px 10px; border:1px solid var(--borda); border-radius:8px; background:#fff; min-width:160px; }
+    input[type="checkbox"] { transform: translateY(2px); }
+    button { background:var(--pri); color:#fff; border:none; border-radius:10px; padding:10px 14px; cursor:pointer; }
+    button.alt { background:#fff; color:var(--txt); border:1px solid var(--borda); }
+    button.warn { background:#333; }
+    button.acc { background:var(--acc); color:#111; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+
+    .panel h2 { margin:0 0 12px 0; font-size:18px; }
+    table { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--borda); border-radius:12px; overflow:hidden; }
+    thead th { background:#fafafa; font-weight:600; font-size:12px; color:var(--sub); text-align:left; padding:10px; border-bottom:1px solid var(--borda); }
+    tbody td { padding:10px; border-bottom:1px solid var(--borda); font-size:14px; }
+    tbody tr:hover { background:#fcfcfc; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .muted { color:var(--sub); font-size:12px; }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .footer { text-align:center; color:var(--sub); font-size:12px; margin:18px 0 40px; }
+
+    .pagination { display:flex; gap:8px; align-items:center; margin-top:12px; }
+    .badge { display:inline-block; font-size:11px; padding:2px 8px; border:1px solid #dcdcdc; border-radius:999px; background:#fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="wrap">
+        <h1>Almox WPG — Impressões</h1>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="visualizador.html">Visualizador</a></li>
+          <li><a href="gerador.html">Gerador</a></li>
+          <li><a href="atualizar.html">Atualizar</a></li>
+          <li><a href="relatorio.html">Relatório</a></li>
+          <li><a href="imprimir.html" style="background:#111;color:#fff;">Impressões</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- CONTROLES GERAIS -->
+    <div class="toolbar">
+      <div class="row">
+        <div>
+          <label>Impressora (nome da fila)</label>
+          <input type="text" id="printerName" value="ZDesigner GK420t"/>
+          <div class="muted">Caminho de rede: \\wacaapc070\ZDesigner GK420t (informação do ambiente)</div>
+        </div>
+        <div>
+          <label>DPI</label>
+          <select id="dpi">
+            <option value="203" selected>203 dpi (GK420t padrão)</option>
+            <option value="300">300 dpi</option>
+          </select>
+        </div>
+        <div>
+          <label>Cópias</label>
+          <input type="number" id="copias" value="1" min="1" max="10"/>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Opções</label>
+          <div>
+            <label><input type="checkbox" id="incluiQR" checked> Incluir QR Code</label>
+            &nbsp;&nbsp;
+            <label><input type="checkbox" id="incluiComentario" checked> Incluir comentário</label>
+          </div>
+        </div>
+        <div>
+          <label>Filtro</label>
+          <input type="text" id="filtro" placeholder="ID, Item, OP, Parceiro, Status..." />
+        </div>
+        <div class="actions">
+          <button class="alt" id="btnTestQZ">Testar conexão QZ</button>
+          <button class="acc" id="btnImprimirSelecao">Imprimir selecionados</button>
+          <button class="warn" id="btnLimparSelecao">Limpar seleção</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABELA DE PEDIDOS -->
+    <div class="panel">
+      <h2>Pedidos <span id="count" class="badge">0</span></h2>
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="checkAll"/></th>
+            <th>ID</th>
+            <th>Item</th>
+            <th>OP</th>
+            <th>Qtd</th>
+            <th>Parceiro</th>
+            <th>Status</th>
+            <th>Entrada</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="pagination">
+        <button id="prevPage">Anterior</button>
+        <span id="pageInfo" class="muted"></span>
+        <button id="nextPage">Próxima</button>
+      </div>
+    </div>
+
+    <div class="footer">Projeto interno desenvolvido por Mauricio – Analista de TI</div>
+  </main>
+
+  <!-- QZ Tray -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qz-tray/2.2.4/qz-tray.js"></script>
+
+  <!-- Firebase + Lógica -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // ===== Firebase =====
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.firebasestorage.app",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+      measurementId: "G-9PL8JP0SD4"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ===== Estado e elementos =====
+    let pedidos = [];
+    let filtrados = [];
+    let pagina = 1;
+    const porPagina = 12;
+
+    const tbody = document.querySelector("#tbl tbody");
+    const count = document.getElementById("count");
+    const filtro = document.getElementById("filtro");
+    const checkAll = document.getElementById("checkAll");
+    const btnPrev = document.getElementById("prevPage");
+    const btnNext = document.getElementById("nextPage");
+    const pageInfo = document.getElementById("pageInfo");
+    const btnTestQZ = document.getElementById("btnTestQZ");
+    const btnImprimirSelecao = document.getElementById("btnImprimirSelecao");
+    const btnLimparSelecao = document.getElementById("btnLimparSelecao");
+    const printerNameEl = document.getElementById("printerName");
+    const dpiEl = document.getElementById("dpi");
+    const copiasEl = document.getElementById("copias");
+    const incluiQREl = document.getElementById("incluiQR");
+    const incluiComentarioEl = document.getElementById("incluiComentario");
+
+    // ===== QZ Tray helpers =====
+    async function conectarQZ() {
+      if (qz.websocket.isActive()) return;
+      await qz.websocket.connect();
+    }
+    async function imprimirZPL(nomeImpressora, zpl, copias=1) {
+      await conectarQZ();
+      const cfg = qz.configs.create(nomeImpressora, { language: "ZPL", copies: Number(copias || 1) });
+      const data = [{ type:"raw", format:"plain", data: zpl }];
+      return qz.print(cfg, data);
+    }
+
+    // ===== ZPL (203 e 300 dpi) – etiqueta 200x108mm =====
+    function montarZPL203(p, {comQR=true, comComentario=true}={}) {
+      const safe = (s)=> (s ?? "-").toString().replace(/[\r\n]+/g, " ");
+      const id = safe(p.idSequencial);
+      const item = safe(p.item);
+      const op = safe(p.op);
+      const qtd = safe(p.quantidade);
+      const parceiro = safe(p.parceiro);
+      const status = safe(p.status);
+      const entrada = p.dataEntrada ? new Date(p.dataEntrada).toLocaleString() : "-";
+      const modif = p.dataModificacao ? new Date(p.dataModificacao).toLocaleString() : "-";
+      const operador = safe(p.operador);
+      const comentario = safe(p.comentario);
+
+      return `^XA
+^PW1600^LL864^LH0,0^LS0^CI28^POI
+^CF0,80^FO40,40^FDAlmox WPG^FS
+^CF0,36^FO40,120^FDPedido:^FS
+^CF0,60^FO220,114^FD${id}^FS
+^FO40,170^GB1520,2,2^FS
+^CF0,34^FO40,200^FDItem:^FS
+^CF0,46^FO220,196^FD${item}^FS
+^CF0,34^FO40,260^FDOP:^FS
+^CF0,46^FO220,256^FD${op}^FS
+^CF0,34^FO40,320^FDQuantidade:^FS
+^CF0,46^FO300,316^FD${qtd}^FS
+^CF0,34^FO40,380^FDParceiro:^FS
+^CF0,46^FO300,376^FD${parceiro}^FS
+^CF0,34^FO900,200^FDStatus:^FS
+^CF0,50^FO1080,196^FD${status}^FS
+^CF0,34^FO900,260^FDEntrada:^FS
+^CF0,40^FO1080,256^FD${entrada}^FS
+^CF0,34^FO900,320^FDÚltima mod.:^FS
+^CF0,40^FO1080,316^FD${modif}^FS
+^CF0,34^FO900,380^FDOperador:^FS
+^CF0,40^FO1080,376^FD${operador}^FS
+^CF0,34^FO40,450^FDComentário:^FS
+${comComentario ? `^CF0,34^FB1460,3,10,L,0^FO40,488^FD${comentario}^FS` : ``}
+^BY3,2,120^FO40,650^BCN,120,Y,N,N^FD${id}^FS
+${comQR ? `^FO900,600^BQN,2,6^FDLA,${id}^FS` : ``}
+^CF0,26^FO1300,820^FDWalterscheid^FS
+^XZ`;
+    }
+
+    function montarZPL300(p, {comQR=true, comComentario=true}={}) {
+      const safe = (s)=> (s ?? "-").toString().replace(/[\r\n]+/g, " ");
+      const id = safe(p.idSequencial);
+      const item = safe(p.item);
+      const op = safe(p.op);
+      const qtd = safe(p.quantidade);
+      const parceiro = safe(p.parceiro);
+      const status = safe(p.status);
+      const entrada = p.dataEntrada ? new Date(p.dataEntrada).toLocaleString() : "-";
+      const modif = p.dataModificacao ? new Date(p.dataModificacao).toLocaleString() : "-";
+      const operador = safe(p.operador);
+      const comentario = safe(p.comentario);
+
+      return `^XA
+^PW2400^LL1296^LH0,0^LS0^CI28^POI
+^CF0,120^FO60,60^FDAlmox WPG^FS
+^CF0,54^FO60,180^FDPedido:^FS
+^CF0,90^FO330,171^FD${id}^FS
+^FO60,255^GB2280,3,3^FS
+^CF0,51^FO60,300^FDItem:^FS
+^CF0,69^FO330,294^FD${item}^FS
+^CF0,51^FO60,360^FDOP:^FS
+^CF0,69^FO330,354^FD${op}^FS
+^CF0,51^FO60,420^FDQuantidade:^FS
+^CF0,69^FO450,414^FD${qtd}^FS
+^CF0,51^FO60,480^FDParceiro:^FS
+^CF0,69^FO450,474^FD${parceiro}^FS
+^CF0,51^FO1350,300^FDStatus:^FS
+^CF0,75^FO1620,294^FD${status}^FS
+^CF0,51^FO1350,360^FDEntrada:^FS
+^CF0,60^FO1620,354^FD${entrada}^FS
+^CF0,51^FO1350,420^FDÚltima mod.:^FS
+^CF0,60^FO1620,414^FD${modif}^FS
+^CF0,51^FO1350,480^FDOperador:^FS
+^CF0,60^FO1620,474^FD${operador}^FS
+^CF0,51^FO60,570^FDComentário:^FS
+${comComentario ? `^CF0,51^FB2190,3,15,L,0^FO60,615^FD${comentario}^FS` : ``}
+^BY4,2,180^FO60,975^BCN,180,Y,N,N^FD${id}^FS
+${comQR ? `^FO1350,900^BQN,2,8^FDLA,${id}^FS` : ``}
+^CF0,39^FO1950,1230^FDWalterscheid^FS
+^XZ`;
+    }
+
+    // ===== Dados =====
+    async function carregarPedidos() {
+      const snap = await getDocs(collection(db, "pedidos"));
+      pedidos = [];
+      snap.forEach(d => pedidos.push({ id: d.id, ...d.data() }));
+      // ordena por dataEntrada desc (fallback para idSequencial)
+      pedidos.sort((a,b)=>{
+        const da = a.dataEntrada ? new Date(a.dataEntrada).getTime() : 0;
+        const dbb = b.dataEntrada ? new Date(b.dataEntrada).getTime() : 0;
+        if (dbb !== da) return dbb - da;
+        return (b.idSequencial||0) - (a.idSequencial||0);
+      });
+      aplicarFiltro();
+    }
+
+    function aplicarFiltro() {
+      const f = (filtro.value || "").toLowerCase();
+      filtrados = !f ? pedidos.slice() :
+        pedidos.filter(p => [
+          p.idSequencial, p.item, p.op, p.quantidade, p.parceiro, p.status
+        ].some(v => (v??"").toString().toLowerCase().includes(f)));
+      pagina = 1;
+      render();
+    }
+
+    function render() {
+      tbody.innerHTML = "";
+      count.textContent = filtrados.length;
+
+      const totalPaginas = Math.max(1, Math.ceil(filtrados.length / porPagina));
+      const start = (pagina - 1) * porPagina;
+      const pageItems = filtrados.slice(start, start + porPagina);
+
+      pageItems.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="checkbox" class="chk" data-id="${p.idSequencial}"></td>
+          <td>${p.idSequencial ?? "-"}</td>
+          <td>${p.item ?? "-"}</td>
+          <td>${p.op ?? "-"}</td>
+          <td>${p.quantidade ?? "-"}</td>
+          <td>${p.parceiro ?? "-"}</td>
+          <td>${p.status ?? "-"}</td>
+          <td>${p.dataEntrada ? new Date(p.dataEntrada).toLocaleString() : "-"}</td>
+          <td class="actions">
+            <button onclick="imprimirUma(${p.idSequencial})">Imprimir</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      btnPrev.disabled = pagina <= 1;
+      btnNext.disabled = pagina >= totalPaginas;
+      pageInfo.textContent = `Página ${pagina} de ${totalPaginas}`;
+      checkAll.checked = false;
+    }
+
+    // ===== Eventos =====
+    filtro.addEventListener("input", () => aplicarFiltro());
+    btnPrev.addEventListener("click", () => { if(pagina>1){ pagina--; render(); }});
+    btnNext.addEventListener("click", () => {
+      const totalPaginas = Math.max(1, Math.ceil(filtrados.length / porPagina));
+      if (pagina < totalPaginas) { pagina++; render(); }
+    });
+
+    checkAll.addEventListener("change", () => {
+      document.querySelectorAll(".chk").forEach(c => c.checked = checkAll.checked);
+    });
+
+    btnLimparSelecao.addEventListener("click", () => {
+      document.querySelectorAll(".chk").forEach(c => c.checked = false);
+      checkAll.checked = false;
+    });
+
+    btnTestQZ.addEventListener("click", async() => {
+      try {
+        await conectarQZ();
+        alert("QZ Tray conectado com sucesso.");
+      } catch(e) {
+        alert("Falha ao conectar ao QZ Tray: " + e);
+      }
+    });
+
+    // ===== Impressão =====
+    window.imprimirUma = async (idSequencial) => {
+      try {
+        const p = pedidos.find(x => x.idSequencial === Number(idSequencial));
+        if (!p) return alert("Pedido não encontrado.");
+        const nome = printerNameEl.value || "ZDesigner GK420t";
+        const dpi = dpiEl.value;
+        const copias = copiasEl.value;
+        const zpl = (dpi === "300")
+          ? montarZPL300(p, { comQR: incluiQREl.checked, comComentario: incluiComentarioEl.checked })
+          : montarZPL203(p, { comQR: incluiQREl.checked, comComentario: incluiComentarioEl.checked });
+        await imprimirZPL(nome, zpl, copias);
+        alert(`Etiqueta ${idSequencial} enviada para impressão.`);
+      } catch(e) {
+        console.error(e);
+        alert("Erro ao imprimir: " + e);
+      }
+    };
+
+    btnImprimirSelecao.addEventListener("click", async () => {
+      const selecionados = Array.from(document.querySelectorAll(".chk"))
+        .filter(c => c.checked)
+        .map(c => Number(c.dataset.id));
+
+      if (!selecionados.length) { alert("Selecione ao menos um pedido."); return; }
+
+      const nome = printerNameEl.value || "ZDesigner GK420t";
+      const dpi = dpiEl.value;
+      const copias = copiasEl.value;
+
+      try {
+        await conectarQZ();
+        for (const id of selecionados) {
+          const p = pedidos.find(x => x.idSequencial === Number(id));
+          if (!p) continue;
+          const zpl = (dpi === "300")
+            ? montarZPL300(p, { comQR: incluiQREl.checked, comComentario: incluiComentarioEl.checked })
+            : montarZPL203(p, { comQR: incluiQREl.checked, comComentario: incluiComentarioEl.checked });
+          await imprimirZPL(nome, zpl, copias);
+        }
+        alert("Impressão enviada para a impressora.");
+      } catch(e) {
+        console.error(e);
+        alert("Falha na impressão: " + e);
+      }
+    });
+
+    // Boot
+    carregarPedidos();
+  </script>
+</body>
+</html>
