@@ -134,6 +134,47 @@
     const btnSubmit = document.getElementById("submitButton");
     const btnCancelar = document.getElementById("cancelarEdicao");
 
+    // ===== ACRESCENTADO: Carregar parceiros do Firestore e SOMAR no select existente =====
+    async function carregarParceirosDoFirestore() {
+      const select = document.getElementById("parceiro");
+      if (!select) return;
+
+      // captura os nomes já existentes no select para evitar duplicar
+      const existentes = new Set(
+        [...select.options].map(o => (o.textContent || o.value || "").trim().toLowerCase())
+      );
+
+      try {
+        const qParceiros = query(
+          collection(db, "parceiros"),
+          orderBy("nome", "asc")
+          // Se quiser só ativos, use também: where("ativo","==",true)
+        );
+
+        onSnapshot(qParceiros, (snap) => {
+          // Não limpamos o select: apenas acrescentamos novos que não existem
+          snap.forEach(docSnap => {
+            const p = docSnap.data();
+            const nome = (p?.nome ?? "").trim();
+            if (!nome) return;
+
+            if (!existentes.has(nome.toLowerCase())) {
+              const opt = document.createElement("option");
+              // Mantém compatibilidade: value = nome (seu submit usa "parceiro" = value)
+              opt.value = nome;
+              opt.textContent = nome;
+              select.appendChild(opt);
+              existentes.add(nome.toLowerCase());
+            }
+          });
+        }, (err) => {
+          console.error("Erro ao observar parceiros:", err);
+        });
+      } catch (e) {
+        console.error("Erro ao carregar parceiros:", e);
+      }
+    }
+
     async function getNextSequentialId() {
       const counterRef = doc(db, "counters", "pedidos");
       const counterDoc = await getDoc(counterRef);
@@ -257,6 +298,9 @@
         document.getElementById("usuarioLogado").innerText = "Logado como: " + user.email;
         document.getElementById("logoutBtn").style.display = "inline";
         carregarPedidos();
+
+        // ===== ACRESCENTADO: puxar parceiros do Firestore e SOMAR no select existente =====
+        carregarParceirosDoFirestore();
       } else {
         document.getElementById("usuarioLogado").innerText = "Não autenticado";
       }
