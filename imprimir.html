@@ -176,16 +176,89 @@
     const incluiQREl = document.getElementById("incluiQR");
     const incluiComentarioEl = document.getElementById("incluiComentario");
 
+    // ===== QZ Security (skeleton) =====
+    // Preencha com seu certificado público (PEM) emitido pela QZ ou CA própria.
+    // Em dev você pode deixar como placeholder e habilitar "Allow unsigned requests" no QZ Tray.
+    const QZ_CERT_PEM = `-----BEGIN CERTIFICATE-----
+PASTE_PUBLIC_CERTIFICATE_HERE
+-----END CERTIFICATE-----`;
+
+    // URL do serviço de assinatura que retorna { signature: string }
+    // Em produção, a assinatura deve ser feita no servidor usando a CHAVE PRIVADA.
+    // Exemplo: const QZ_SIGNER_URL = "https://seuservidor.local/api/qz-sign";
+    const QZ_SIGNER_URL = null; // defina sua URL aqui para produção
+    const ALLOW_UNSIGNED_FOR_DEV = true; // defina para false em produção
+
+    let qzSecurityInit = false;
+    function initQZSecurity() {
+      if (qzSecurityInit) return;
+      try {
+        // Certificado público (branding/validação)
+        qz.security.setCertificatePromise(() => Promise.resolve(QZ_CERT_PEM.trim()));
+
+        // Assinatura do desafio: deve ser feita no servidor em produção
+        qz.security.setSignaturePromise((toSign) => {
+          return (resolve, reject) => {
+            if (QZ_SIGNER_URL) {
+              fetch(QZ_SIGNER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ request: toSign })
+              })
+              .then(res => res.ok ? res.json() : Promise.reject(res.statusText))
+              .then(data => {
+                if (data && data.signature) resolve(data.signature);
+                else reject('Resposta inválida do servidor de assinatura.');
+              })
+              .catch(err => reject(err));
+              return;
+            }
+            if (ALLOW_UNSIGNED_FOR_DEV) {
+              // Somente funciona se o QZ Tray estiver com "Allow unsigned requests" ativo
+              resolve(null);
+              return;
+            }
+            reject('Assinatura não configurada. Defina QZ_SIGNER_URL e desative ALLOW_UNSIGNED_FOR_DEV.');
+          };
+        });
+
+        qzSecurityInit = true;
+      } catch (e) {
+        console.warn('Falha ao configurar segurança QZ:', e);
+      }
+    }
+
     // ===== QZ Tray helpers =====
     async function conectarQZ() {
       if (qz.websocket.isActive()) return;
-      await qz.websocket.connect();
+      try { qz.api && qz.api.setTrace && qz.api.setTrace(true); } catch (_) {}
+      initQZSecurity();
+      const attempts = [
+        undefined, // detecção automática padrão
+        { host: '127.0.0.1', port: 8181, usingSecure: false },
+        { host: 'localhost',  port: 8181, usingSecure: false },
+        { host: '127.0.0.1', port: 8282, usingSecure: true  },
+        { host: 'localhost',  port: 8282, usingSecure: true  },
+      ];
+      let lastErr;
+      for (const cfg of attempts) {
+        try {
+          if (cfg) { await qz.websocket.connect(cfg); } else { await qz.websocket.connect(); }
+          return;
+        } catch (e) { lastErr = e; }
+      }
+      throw lastErr || new Error('QZ Tray não respondeu nos endpoints padrão (8181/8282).');
     }
     async function imprimirZPL(nomeImpressora, zpl, copias=1) {
       await conectarQZ();
       const cfg = qz.configs.create(nomeImpressora, { language: "ZPL", copies: Number(copias || 1) });
       const data = [{ type:"raw", format:"plain", data: zpl }];
       return qz.print(cfg, data);
+    }
+
+    // ===== Utilidades UI =====
+    function totalPaginas() {
+      return Math.max(1, Math.ceil(filtrados.length / porPagina));
     }
 
     // ===== ZPL (203 e 300 dpi) – etiqueta 200x108mm =====
@@ -275,7 +348,7 @@ ${comQR ? `^FO1350,900^BQN,2,8^FDLA,${id}^FS` : ``}
 ^XZ`;
     }
 
-    // ===== Dados =====
+   // ===== Dados =====
     async function carregarPedidos() {
       const snap = await getDocs(collection(db, "pedidos"));
       pedidos = [];
@@ -327,36 +400,10 @@ ${comQR ? `^FO1350,900^BQN,2,8^FDLA,${id}^FS` : ``}
       });
 
       btnPrev.disabled = pagina <= 1;
-      btnNext.disabled = pagina >= totalPaginas;
-      pageInfo.textContent = `Página ${pagina} de ${totalPaginas}`;
+      btnNext.disabled = pagina >= totalPaginas();
+      pageInfo.textContent = `Página ${pagina} de ${totalPaginas()}`;
       checkAll.checked = false;
     }
-
-    // ===== Eventos =====
-    filtro.addEventListener("input", () => aplicarFiltro());
-    btnPrev.addEventListener("click", () => { if(pagina>1){ pagina--; render(); }});
-    btnNext.addEventListener("click", () => {
-      const totalPaginas = Math.max(1, Math.ceil(filtrados.length / porPagina));
-      if (pagina < totalPaginas) { pagina++; render(); }
-    });
-
-    checkAll.addEventListener("change", () => {
-      document.querySelectorAll(".chk").forEach(c => c.checked = checkAll.checked);
-    });
-
-    btnLimparSelecao.addEventListener("click", () => {
-      document.querySelectorAll(".chk").forEach(c => c.checked = false);
-      checkAll.checked = false;
-    });
-
-    btnTestQZ.addEventListener("click", async() => {
-      try {
-        await conectarQZ();
-        alert("QZ Tray conectado com sucesso.");
-      } catch(e) {
-        alert("Falha ao conectar ao QZ Tray: " + e);
-      }
-    });
 
     // ===== Impressão =====
     window.imprimirUma = async (idSequencial) => {
@@ -376,6 +423,60 @@ ${comQR ? `^FO1350,900^BQN,2,8^FDLA,${id}^FS` : ``}
         alert("Erro ao imprimir: " + e);
       }
     };
+
+    // ===== Controles: seleção, filtro e paginação =====
+    checkAll.addEventListener("change", () => {
+      document.querySelectorAll(".chk").forEach(chk => { chk.checked = checkAll.checked; });
+    });
+
+    btnLimparSelecao.addEventListener("click", () => {
+      document.querySelectorAll(".chk").forEach(chk => { chk.checked = false; });
+      checkAll.checked = false;
+    });
+
+    filtro.addEventListener("input", () => {
+      aplicarFiltro();
+    });
+
+    btnPrev.addEventListener("click", () => {
+      if (pagina > 1) { pagina--; render(); }
+    });
+
+    btnNext.addEventListener("click", () => {
+      if (pagina < totalPaginas()) { pagina++; render(); }
+    });
+
+    // ===== Teste de conexão QZ + listagem de impressoras =====
+    btnTestQZ.addEventListener("click", async () => {
+      try {
+        await conectarQZ();
+        let version = null;
+        try { version = await qz.api.getVersion(); } catch (_) {}
+        const def = await qz.printers.getDefault().catch(() => null);
+        const list = await qz.printers.list();
+        if (def && !printerNameEl.value) {
+          printerNameEl.value = def;
+        }
+        const listaFmt = list && list.length ? `\n\nImpressoras detectadas:\n- ${list.join("\n- ")}` : "\n\nNenhuma impressora retornada.";
+        const verFmt = version ? `QZ Tray versão: ${version}` : "QZ Tray versão: (indisponível)";
+        alert(`${verFmt}\nPadrão: ${def || "(nenhuma)"}${listaFmt}`);
+      } catch (e) {
+        console.error(e);
+        const dicas = [
+          "Verifique se o QZ Tray está instalado e em execução.",
+          "No QZ Tray, para ambiente de desenvolvimento, habilite 'Allow unsigned requests'.",
+          "Em produção, configure certificate/signature no código usando qz.security.setCertificatePromise e setSignaturePromise.",
+        ].join("\n- ");
+        alert(`Falha ao conectar ao QZ Tray.\n\n- ${dicas}\n\nErro: ${e}`);
+      }
+    });
+
+    // Desconectar com segurança ao sair
+    window.addEventListener("beforeunload", () => {
+      if (qz && qz.websocket && qz.websocket.isActive()) {
+        try { qz.websocket.disconnect(); } catch (_) {}
+      }
+    });
 
     btnImprimirSelecao.addEventListener("click", async () => {
       const selecionados = Array.from(document.querySelectorAll(".chk"))
