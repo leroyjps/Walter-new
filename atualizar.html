@@ -226,6 +226,7 @@
           item: pedido.item,
           status: novoStatus,
           operador: nomeOperador,
+          parceiro: pedido.parceiro,
           comentario: comentarioNovo
         }).then(() => {
           console.log("Email enviado com sucesso!");
