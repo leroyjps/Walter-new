@@ -220,19 +220,21 @@
 
         await updateDoc(pedidoDoc, atualizacao);
 
-        emailjs.send("service_how3gpr", "template_nffl5al", {
-          to_email: pedido.emailCriador,
-          id: pedido.idSequencial,
-          item: pedido.item,
-          status: novoStatus,
-          operador: nomeOperador,
-          parceiro: pedido.parceiro,
-          comentario: comentarioNovo
-        }).then(() => {
-          console.log("Email enviado com sucesso!");
-        }).catch((error) => {
-          console.error("Erro ao enviar email:", error);
-        });
+       emailjs.send("service_how3gpr", "template_nffl5al", {
+  to_email: pedido.emailCriador,
+  id: pedido.idSequencial,
+  item: pedido.item,
+  status: novoStatus,
+  operador: nomeOperador,
+  parceiro: pedido.parceiro,       // ✅ agora envia o parceiro
+  comentario: comentarioNovo
+})
+.then(() => {
+  console.log("Email enviado com sucesso!");
+})
+.catch((error) => {
+  console.error("Erro ao enviar email:", error);
+});
 
         alert("Status atualizado com sucesso!");
         buscarPedidos();
