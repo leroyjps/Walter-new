@@ -4,34 +4,152 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Embarques - Walterscheid Day</title>
-    <!-- Importação de estilos e fontes -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <!-- Cabeçalho -->
-    <header>
-        <nav>
-            <div id="title">
-                <h1>Walterscheid Powertrain Group</h1>
-            </div>
-                 <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="sobre-nos.html">Sobre</a></li>
-                <li><a href="Entregas.html">Entregas</a></li>
-                <li><a href="Videos.html">Vídeos</a></li>
-                <li><a href="clima.html">Clima</a></li>
-                <li><a href="Embarques.html">Embarques</a></li>
-                <li><a href="contato.html">Contato</a></li>
-                <li><a href="visitantes.html">Visitantes</a></li>
-                <li><a href="gerador.html">Almox</a></li>
-                <li><a href="cardapio.html">Cardápio</a></li>
-            </ul>
-        </nav>
-    </header>
 
-    <!-- Conteúdo principal da página de Embarques -->
-    <main>
+    <!-- Fontes -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- CSS principal -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- CSS do ticker -->
+    <style>
+        .quotes-bar {
+            background: #0f172a;
+            width: 100%;
+            overflow: hidden;
+            border-bottom: 2px solid #1e293b;
+        }
+
+        .slide__viewport {
+            overflow: hidden;
+        }
+
+        .slide__row {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            list-style: none;
+            padding: 10px 20px;
+            margin: 0;
+            white-space: nowrap;
+            will-change: transform;
+        }
+
+        .slide__item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .slide__item img {
+            width: 22px;
+            height: 22px;
+        }
+
+        .qt-price {
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        .qt-positive { color: #22c55e; }
+        .qt-negative { color: #ef4444; }
+
+        .qt-up::before {
+            content: "▲";
+            margin-right: 4px;
+        }
+
+        .qt-down::before {
+            content: "▼";
+            margin-right: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Cabeçalho -->
+<header>
+    <nav>
+        <div id="title">
+            <h1>Walterscheid Powertrain Group</h1>
+        </div>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="sobre-nos.html">Sobre</a></li>
+            <li><a href="Entregas.html">Entregas</a></li>
+            <li><a href="Videos.html">Vídeos</a></li>
+            <li><a href="clima.html">Clima</a></li>
+            <li><a href="Embarques.html">Embarques</a></li>
+            <li><a href="contato.html">Contato</a></li>
+            <li><a href="visitantes.html">Visitantes</a></li>
+            <li><a href="gerador.html">Almox</a></li>
+            <li><a href="cardapio.html">Cardápio</a></li>
+        </ul>
+    </nav>
+</header>
+
+<!-- 🔽 TICKER DE COTAÇÕES (SEU PRIMEIRO CÓDIGO) -->
+<section class="quotes-bar">
+    <div class="slide__viewport">
+        <ul class="slide__row">
+
+            <li class="slide__item">
+                <img src="https://iclnoticias.com.br/sdk/quotes/img/BVSP.svg">
+                IBOVESPA <span class="qt-price">R$ 181.266,44</span>
+                <i class="qt-up"></i><span class="qt-positive">+1.42%</span>
+            </li>
+
+            <li class="slide__item">
+                <img src="https://iclnoticias.com.br/sdk/quotes/img/GSPC.svg">
+                S&amp;P 500 <span class="qt-price">R$ 6.950,23</span>
+                <i class="qt-up"></i><span class="qt-positive">+0.5%</span>
+            </li>
+
+            <li class="slide__item">
+                <img src="https://iclnoticias.com.br/sdk/quotes/img/IXIC.svg">
+                NASDAQ <span class="qt-price">R$ 23.601,36</span>
+                <i class="qt-up"></i><span class="qt-positive">+0.43%</span>
+            </li>
+
+            <li class="slide__item">
+                <img src="https://iclnoticias.com.br/sdk/quotes/img/dolar.svg">
+                Dólar <span class="qt-price">R$ 5,26</span>
+                <i class="qt-down"></i><span class="qt-negative">-0.37%</span>
+            </li>
+
+            <li class="slide__item">
+                <img src="https://iclnoticias.com.br/sdk/quotes/img/euro.svg">
+                Euro <span class="qt-price">R$ 6,27</span>
+                <i class="qt-down"></i><span class="qt-negative">-0.08%</span>
+            </li>
+
+            <li class="slide__item">
+                <img src="https://icons.brapi.dev/icons/PETR4.svg">
+                PETR4 <span class="qt-price">R$ 35,36</span>
+                <i class="qt-up"></i><span class="qt-positive">+0.91%</span>
+            </li>
+
+            <li class="slide__item">
+                <img src="https://icons.brapi.dev/icons/VALE3.svg">
+                VALE3 <span class="qt-price">R$ 83,07</span>
+                <i class="qt-down"></i><span class="qt-negative">-2.29%</span>
+            </li>
+
+            <li class="slide__item">
+                <img src="https://iclnoticias.com.br/sdk/quotes/img/bitcoin.svg">
+                Bitcoin <span class="qt-price">R$ 461.895,56</span>
+                <i class="qt-down"></i><span class="qt-negative">-0.43%</span>
+            </li>
+
+        </ul>
+    </div>
+</section>
+
+<!-- Conteúdo principal -->
+   <main>
         <section class="embarques-section">
             <h1>Embarques</h1>
             <p>Monitoramento de embarques em tempo real. Acompanhe o status de suas entregas.</p>
@@ -42,20 +160,33 @@
  </section>
     </main>
 
-    <!-- Script para recarregar a página automaticamente a cada 5 minutos -->
-    <script>
-        function reloadPage() {
-            location.reload();
-        }
-        setTimeout(reloadPage, 300000); // Recarrega a página a cada 5 minutos
-    </script>
+<!-- Scripts -->
+<script>
+    function reloadPage() {
+        location.reload();
+    }
+    setTimeout(reloadPage, 300000);
 
-    <!-- Rodapé -->
-    <footer>
-        <div class="footer-logo">
-            <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
-        </div>
-        <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
-    </footer>
+    const row = document.querySelector('.slide__row');
+    let position = 0;
+    const speed = 0.4;
+
+    function animateTicker() {
+        position -= speed;
+        row.style.transform = `translateX(${position}px)`;
+        if (Math.abs(position) > row.scrollWidth / 2) position = 0;
+        requestAnimationFrame(animateTicker);
+    }
+    animateTicker();
+</script>
+
+<!-- Rodapé -->
+<footer>
+    <div class="footer-logo">
+        <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo">
+    </div>
+    <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+</footer>
+
 </body>
 </html>
