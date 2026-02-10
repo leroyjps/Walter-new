@@ -1,264 +1,322 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Atualizar Pedidos - Walterscheid Powertrain Group</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
- <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Atualizar Pedidos - Walterscheid Powertrain Group</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+
 </head>
+
 <body>
-  <header>
-    <nav>
-      <div id="title">
-        <h1>Walterscheid Powertrain Group</h1>
-      </div>
-      <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="gerador.html">Gerar Pedido</a></li>
-        <li><a href="visualizador.html">Visualizar Pedidos</a></li>
-        <li><a href="relatorio.html">Relatorio</a></li>
-        <li><a href="imprimir.html">Impressões</a></li>
 
-      </ul>
-    </nav>
-  </header>
+<header>
+<nav>
+<div id="title">
+<h1>Walterscheid Powertrain Group</h1>
+</div>
+<ul>
+<li><a href="index.html">Home</a></li>
+<li><a href="gerador.html">Gerar Pedido</a></li>
+<li><a href="visualizador.html">Visualizar Pedidos</a></li>
+<li><a href="relatorio.html">Relatorio</a></li>
+<li><a href="imprimir.html">Impressões</a></li>
+</ul>
+</nav>
+</header>
 
-  <main>
-    <section>
-      <h1>Atualizar Pedidos</h1>
+<main>
+<section>
 
-      <label for="pedidoId">ID do Pedido:</label>
-      <input type="number" id="pedidoId" required />
+<h1>Atualizar Pedidos</h1>
 
-      <label for="status">Atualizar Status:</label>
-      <select id="status" required>
-        <option value="Liberado">Liberado</option>
-        <option value="Falta">Falta</option>
-        <option value="Pago">Pago</option>
-        <option value="Não Liberado">Não Liberado</option>
-      </select>
+<label>ID do Pedido:</label>
+<input type="number" id="pedidoId" required />
 
-      <label for="operador">Nome do Operador:</label>
-      <select id="operador" required>
-        <option value="">Selecione um operador</option>
-        <option value="Paulo">Paulo</option>
-        <option value="Jordahn">Jordahn</option>
-        <option value="Junior">Junior</option>
-        <option value="Carlos">Carlos</option>
-        <option value="Rodrigo">Rodrigo</option>
-      </select>
+<label>Atualizar Status:</label>
+<select id="status">
+<option value="Liberado">Liberado</option>
+<option value="Falta">Falta</option>
+<option value="Pago">Pago</option>
+<option value="Não Liberado">Não Liberado</option>
+</select>
 
-      <label for="comentario">Comentário:</label>
-      <textarea id="comentario" rows="4" placeholder="Adicione um comentário sobre o pedido" required></textarea>
+<label>Nome do Operador:</label>
+<select id="operador">
+<option value="">Selecione um operador</option>
+<option value="Paulo">Paulo</option>
+<option value="Jordahn">Jordahn</option>
+<option value="Junior">Junior</option>
+<option value="Carlos">Carlos</option>
+<option value="Rodrigo">Rodrigo</option>
+</select>
 
-      <button id="atualizarBtn">Atualizar Status</button>
+<!-- PCP -->
+<label>Comentário do PCP:</label>
+<textarea id="comentarioPCP" rows="3" readonly
+placeholder="Somente o PCP pode editar este campo"></textarea>
 
-      <h2>Pedidos Existentes</h2>
-      <table id="pedidoTable">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Item</th>
-            <th>Op</th>
-            <th>Quantidade</th>
-            <th>Parceiro de Negócio</th>
-            <th>Status</th>
-            <th>Comentário</th>
-            <th>Operador</th>
-            <th>Data de Entrada</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+<label>Comentário do Operador:</label>
+<textarea id="comentario" rows="4"
+placeholder="Adicione um comentário sobre o pedido"></textarea>
 
-      <div class="pagination">
-        <button id="prev-btn" onclick="previousPage()">Anterior</button>
-        <span id="page-info"></span>
-        <button id="next-btn" onclick="nextPage()">Próxima</button>
-      </div>
-    </section>
-  </main>
+<button id="atualizarBtn">Atualizar Status</button>
 
-  <footer>
-    <div class="footer-logo">
-      <img src="components/images/Walterscheid.jpg" alt="Logo Walterscheid" class="logo" />
-    </div>
-    <p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
-  </footer>
+<h2>Pedidos Existentes</h2>
 
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <script>
-    emailjs.init("peQF3Y1KwUgr3Rt5f");
-  </script>
+<table id="pedidoTable">
+<thead>
+<tr>
+<th>ID</th>
+<th>Item</th>
+<th>Op</th>
+<th>Quantidade</th>
+<th>Parceiro</th>
+<th>Status</th>
+<th>Comentário PCP</th>
+<th>Comentário Operador</th>
+<th>Operador</th>
+<th>Data de Entrada</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      getDocs,
-      updateDoc,
-      doc,
-      getDoc,
-      setDoc
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<div class="pagination">
+<button id="prev-btn" onclick="previousPage()">Anterior</button>
+<span id="page-info"></span>
+<button id="next-btn" onclick="nextPage()">Próxima</button>
+</div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
-      authDomain: "walterscheid-estoque.firebaseapp.com",
-      projectId: "walterscheid-estoque",
-      storageBucket: "walterscheid-estoque.firebasestorage.app",
-      messagingSenderId: "487386736937",
-      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
-      measurementId: "G-9PL8JP0SD4"
-    };
+</section>
+</main>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+<footer>
+<div class="footer-logo">
+<img src="components/images/Walterscheid.jpg" class="logo"/>
+</div>
+<p>&copy; 2024 Walterscheid. Todos os direitos reservados.</p>
+</footer>
 
-    let pedidos = [];
-    let currentPage = 1;
-    const itemsPerPage = 20;
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script>
+emailjs.init("peQF3Y1KwUgr3Rt5f");
+</script>
 
-    async function buscarPedidos() {
-      const querySnapshot = await getDocs(collection(db, "pedidos"));
-      pedidos = [];
-      querySnapshot.forEach((doc) => {
-        pedidos.push({ id: doc.id, ...doc.data() });
-      });
+<script type="module">
 
-      pedidos.sort((a, b) => {
-        const dataA = new Date(a.dataEntrada);
-        const dataB = new Date(b.dataEntrada);
-        return dataB - dataA;
-      });
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
-      atualizarTabela();
-    }
+import {
+getFirestore,
+collection,
+getDocs,
+updateDoc,
+doc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    function atualizarTabela() {
-      const tbody = document.querySelector("#pedidoTable tbody");
-      tbody.innerHTML = "";
+import {
+getAuth,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-      const start = (currentPage - 1) * itemsPerPage;
-      const pagePedidos = pedidos.slice(start, start + itemsPerPage);
+const firebaseConfig = {
+apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+authDomain: "walterscheid-estoque.firebaseapp.com",
+projectId: "walterscheid-estoque",
+storageBucket: "walterscheid-estoque.firebasestorage.app",
+messagingSenderId: "487386736937",
+appId: "1:487386736937:web:4be50b32bb7fe90f552f38"
+};
 
-      pagePedidos.forEach((pedido) => {
-        const linha = tbody.insertRow();
-        const dataEntrada = new Date(pedido.dataEntrada);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-        linha.innerHTML = `
-          <td>${pedido.idSequencial || "N/A"}</td>
-          <td>${pedido.item}</td>
-          <td>${pedido.op}</td>
-          <td>${pedido.quantidade}</td>
-          <td>${pedido.parceiro}</td>
-          <td>${pedido.status}</td>
-          <td>${pedido.comentario || "-"}</td>
-          <td>${pedido.operador || "-"}</td>
-          <td>${dataEntrada.toLocaleString()}</td>
-        `;
-      });
+let pedidos = [];
+let currentPage = 1;
+const itemsPerPage = 20;
 
-      document.getElementById("page-info").innerText =
-        `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage)}`;
-      document.getElementById("prev-btn").disabled = currentPage === 1;
-      document.getElementById("next-btn").disabled =
-        (start + itemsPerPage) >= pedidos.length;
-    }
+let usuarioLogado = null;
+let isWilliam = false;
 
-    document.getElementById("pedidoId").addEventListener("input", async function () {
-      const pedidoId = parseInt(document.getElementById("pedidoId").value.trim());
-      if (isNaN(pedidoId)) {
-        return;
-      }
+/* 🔐 VERIFICA LOGIN */
+onAuthStateChanged(auth, (user) => {
 
-      const pedido = pedidos.find(p => p.idSequencial === pedidoId);
-      if (pedido) {
-        document.getElementById("comentario").value = pedido.comentario || "";
-      } else {
-        document.getElementById("comentario").value = "";
-      }
-    });
+if(user){
 
-    document.getElementById("atualizarBtn").onclick = async function () {
-      const idSequencial = parseInt(document.getElementById("pedidoId").value.trim());
-      const novoStatus = document.getElementById("status").value;
-      const nomeOperador = document.getElementById("operador").value.trim();
-      const comentarioNovo = document.getElementById("comentario").value.trim();
+usuarioLogado = user.email;
 
-      if (!nomeOperador) {
-        alert("Por favor, insira o nome do operador.");
-        return;
-      }
+if(usuarioLogado === "william.padilha@gmail.com"){
 
-      if (isNaN(idSequencial) || idSequencial <= 0) {
-        alert("Informe um número de ID válido.");
-        return;
-      }
+isWilliam = true;
 
-      const pedido = pedidos.find(p => p.idSequencial === idSequencial);
+document.getElementById("comentarioPCP").removeAttribute("readonly");
+document.getElementById("comentarioPCP").placeholder = "Digite o comentário do PCP";
 
-      if (!pedido) {
-        alert("ID informado não corresponde a nenhum pedido listado.");
-        return;
-      }
+}else{
 
-      try {
-        const pedidoDoc = doc(db, "pedidos", pedido.id);
-        const atualizacao = {
-          status: novoStatus,
-          operador: nomeOperador,
-          comentario: comentarioNovo,
-          dataModificacao: new Date().toISOString() // 👈 NOVO
-        };
+document.getElementById("comentarioPCP").setAttribute("readonly", true);
+}
 
-        if (novoStatus === "Liberado") {
-          atualizacao.dataLiberacao = new Date().toISOString();
-        }
+}else{
 
-        await updateDoc(pedidoDoc, atualizacao);
+alert("Usuário não autenticado.");
+}
 
-       emailjs.send("service_how3gpr", "template_nffl5al", {
-  to_email: pedido.emailCriador,
-  id: pedido.idSequencial,
-  item: pedido.item,
-  status: novoStatus,
-  operador: nomeOperador,
-  parceiro: pedido.parceiro,       // ✅ agora envia o parceiro
-  comentario: comentarioNovo
-})
-.then(() => {
-  console.log("Email enviado com sucesso!");
-})
-.catch((error) => {
-  console.error("Erro ao enviar email:", error);
 });
 
-        alert("Status atualizado com sucesso!");
-        buscarPedidos();
-      } catch (error) {
-        console.error(error);
-        alert("Erro ao atualizar o status.");
-      }
-    };
+/* BUSCAR PEDIDOS */
+async function buscarPedidos(){
 
-    window.previousPage = () => {
-      if (currentPage > 1) {
-        currentPage--;
-        atualizarTabela();
-      }
-    };
+const querySnapshot = await getDocs(collection(db, "pedidos"));
 
-    window.nextPage = () => {
-      if (currentPage * itemsPerPage < pedidos.length) {
-        currentPage++;
-        atualizarTabela();
-      }
-    };
+pedidos = [];
 
-    window.onload = buscarPedidos;
-  </script>
+querySnapshot.forEach((docSnap)=>{
+pedidos.push({id: docSnap.id, ...docSnap.data()});
+});
+
+pedidos.sort((a,b)=> new Date(b.dataEntrada) - new Date(a.dataEntrada));
+
+atualizarTabela();
+}
+
+function atualizarTabela(){
+
+const tbody = document.querySelector("#pedidoTable tbody");
+tbody.innerHTML = "";
+
+const start = (currentPage-1)*itemsPerPage;
+const pagePedidos = pedidos.slice(start, start+itemsPerPage);
+
+pagePedidos.forEach((pedido)=>{
+
+const linha = tbody.insertRow();
+const dataEntrada = new Date(pedido.dataEntrada);
+
+linha.innerHTML = `
+<td>${pedido.idSequencial || "N/A"}</td>
+<td>${pedido.item}</td>
+<td>${pedido.op}</td>
+<td>${pedido.quantidade}</td>
+<td>${pedido.parceiro}</td>
+<td>${pedido.status}</td>
+<td>${pedido.comentarioPCP || "-"}</td>
+<td>${pedido.comentario || "-"}</td>
+<td>${pedido.operador || "-"}</td>
+<td>${dataEntrada.toLocaleString()}</td>
+`;
+
+});
+
+document.getElementById("page-info").innerText =
+`Página ${currentPage} de ${Math.ceil(pedidos.length/itemsPerPage)}`;
+
+}
+
+/* MOSTRA COMENTÁRIOS */
+document.getElementById("pedidoId").addEventListener("input",function(){
+
+const pedidoId = parseInt(this.value.trim());
+
+if(isNaN(pedidoId)) return;
+
+const pedido = pedidos.find(p=>p.idSequencial === pedidoId);
+
+if(pedido){
+
+document.getElementById("comentario").value = pedido.comentario || "";
+document.getElementById("comentarioPCP").value = pedido.comentarioPCP || "";
+
+}else{
+
+document.getElementById("comentario").value = "";
+document.getElementById("comentarioPCP").value = "";
+
+}
+
+});
+
+/* ATUALIZAR */
+document.getElementById("atualizarBtn").onclick = async function(){
+
+const idSequencial = parseInt(document.getElementById("pedidoId").value.trim());
+const novoStatus = document.getElementById("status").value;
+const nomeOperador = document.getElementById("operador").value.trim();
+const comentarioNovo = document.getElementById("comentario").value.trim();
+const comentarioPCP = document.getElementById("comentarioPCP").value.trim();
+
+if(!nomeOperador){
+alert("Selecione o operador.");
+return;
+}
+
+const pedido = pedidos.find(p=>p.idSequencial === idSequencial);
+
+if(!pedido){
+alert("Pedido não encontrado.");
+return;
+}
+
+try{
+
+const pedidoDoc = doc(db,"pedidos",pedido.id);
+
+let atualizacao = {
+status: novoStatus,
+operador: nomeOperador,
+comentario: comentarioNovo,
+dataModificacao: new Date().toISOString()
+};
+
+/* SOMENTE WILLIAM ATUALIZA PCP */
+if(isWilliam){
+atualizacao.comentarioPCP = comentarioPCP;
+}
+
+await updateDoc(pedidoDoc, atualizacao);
+
+await emailjs.send("service_how3gpr","template_nffl5al",{
+to_email: pedido.emailCriador,
+id: pedido.idSequencial,
+item: pedido.item,
+status: novoStatus,
+operador: nomeOperador,
+parceiro: pedido.parceiro,
+comentario: comentarioNovo,
+comentario_pcp: isWilliam ? comentarioPCP : (pedido.comentarioPCP || "Sem comentário")
+});
+
+alert("Pedido atualizado com sucesso!");
+
+buscarPedidos();
+
+}catch(error){
+console.error(error);
+alert("Erro ao atualizar.");
+}
+
+};
+
+window.previousPage = ()=>{
+if(currentPage>1){
+currentPage--;
+atualizarTabela();
+}
+};
+
+window.nextPage = ()=>{
+if(currentPage*itemsPerPage < pedidos.length){
+currentPage++;
+atualizarTabela();
+}
+};
+
+window.onload = buscarPedidos;
+
+</script>
 </body>
 </html>
