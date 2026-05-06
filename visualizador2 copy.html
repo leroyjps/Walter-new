@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualizar Pedidos - Walterscheid Powertrain Group</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Destaque temporário da linha alterada */
+    .highlight {
+      animation: highlightAnim 4s ease;
+    }
+    @keyframes highlightAnim {
+      0% { background-color: #d4edda; }
+      100% { background-color: transparent; }
+    }
+
+    /* Linha temporária de status liberado/pago — desaparece após 20s */
+    .temporario {
+      animation: highlightAnim 4s ease;
+    }
+    .temporario td {
+      opacity: 1;
+      transition: opacity 1s ease;
+    }
+    .temporario.fadeout td {
+      opacity: 0;
+    }
+
+    /* Badge de contagem regressiva */
+    .countdown-badge {
+      display: inline-block;
+      background: #e74c3c;
+      color: #fff;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 22px;
+      text-align: center;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <div id="title"><h1>Walterscheid Powertrain Group</h1></div>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="visualizador.html">Visualizar Pedidos</a></li>
+        <li><a href="atualizar.html">Atualizar Pedidos</a></li>
+        <li><a href="relatorio.html">Relatório</a></li>
+        <li><a href="chat.html">Meu Chat</a></li>
+        <li><a href="imprimir.html">Impressões</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h1>Visualizar Pedidos</h1>
+      <table id="pedidoTable">
+        <thead>
+          <tr>
+            <th>ID</th><th>Item</th><th>Op</th><th>Quantidade</th>
+            <th>Parceiro</th><th>Status</th><th>Data Entrada</th>
+            <th>Última Modificação</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="pagination">
+        <button id="prev-btn" onclick="previousPage()">Anterior</button>
+        <span id="page-info"></span>
+        <button id="next-btn" onclick="nextPage()">Próxima</button>
+      </div>
+    </section>
+
+    <!-- Caixa de Resposta -->
+    <div id="respostaBox" class="resposta-container" style="display:none; margin-top:20px; padding:10px;">
+      <h3>Responder Pedido <span id="respostaPedidoId"></span></h3>
+      <div class="chat-mensagens"><ul id="mensagensLista"></ul></div>
+      <textarea id="respostaTexto" rows="3" placeholder="Digite sua resposta"></textarea><br>
+      <button id="btnEnviarResposta">Enviar</button>
+      <button onclick="fecharResposta()">Fechar</button>
+    </div>
+  </main>
+
+  <footer><p>&copy; 2024 Walterscheid</p></footer>
+
+  <!-- Chat popup -->
+  <button id="chatBtn" title="Abrir chat">💬 <span class="badge" id="chatBadge"></span></button>
+  <div id="chatPopup" role="dialog" aria-hidden="true">
+    <header>
+      <h3>Chat Pedido <span id="chatPedidoId"></span></h3>
+      <div>
+        <button id="minimizeChat" aria-label="Minimizar">_</button>
+        <button id="closeChat" aria-label="Fechar chat">&times;</button>
+      </div>
+    </header>
+    <div class="chat-mensagens" id="chatMensagens"></div>
+    <div class="chat-input">
+      <textarea id="chatInput" rows="1" placeholder="Digite uma mensagem..."></textarea>
+      <button id="enviarMsg">➤</button>
+    </div>
+  </div>
+
+  <audio id="notificationSound" src="/components/audio/alerta.mp3" preload="auto"></audio>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+      getFirestore, collection, onSnapshot, query, orderBy, where, addDoc, getDocs 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnE2TRKu7-YQpU-H-Dr4zHuhXjxywEVVs",
+      authDomain: "walterscheid-estoque.firebaseapp.com",
+      projectId: "walterscheid-estoque",
+      storageBucket: "walterscheid-estoque.firebasestorage.app",
+      messagingSenderId: "487386736937",
+      appId: "1:487386736937:web:4be50b32bb7fe90f552f38",
+      measurementId: "G-9PL8JP0SD4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let pedidos = [];
+    let currentPage = 1;
+    const itemsPerPage = 20;
+    const notificationSound = document.getElementById("notificationSound");
+
+    // Status permanentemente visíveis na tabela
+    const statusVisiveis = ["não liberado", "falta"];
+
+    // Status que ficam visíveis temporariamente por 20 segundos ao serem atualizados
+    const statusTemporarios = ["liberado", "pago"];
+
+    // Mapa de pedidos temporários: idSequencial -> { pedido, expiresAt, timerId, countdownId }
+    const temporariosMap = new Map();
+
+    function renderPedidos(highlightId = null) {
+      const tbody = document.querySelector("#pedidoTable tbody");
+      tbody.innerHTML = "";
+      const start = (currentPage - 1) * itemsPerPage;
+
+      // Temporários sempre no topo (ordenados por dataModificacao desc), depois os normais
+      const agora = Date.now();
+      const temporariosAtivos = [...temporariosMap.values()]
+        .filter(t => t.expiresAt > agora)
+        .sort((a, b) => new Date(b.pedido.dataModificacao || b.pedido.dataEntrada) - new Date(a.pedido.dataModificacao || a.pedido.dataEntrada));
+
+      const listaCombinada = [
+        ...temporariosAtivos.map(t => ({ ...t.pedido, _temporario: true })),
+        ...pedidos
+      ];
+
+      const pagePedidos = listaCombinada.slice(start, start + itemsPerPage);
+
+      pagePedidos.forEach((pedido, index) => {
+        const linha = tbody.insertRow();
+        const isTemp = pedido._temporario;
+        const remaining = isTemp
+          ? Math.max(0, Math.ceil((temporariosMap.get(pedido.idSequencial)?.expiresAt - Date.now()) / 1000))
+          : null;
+
+        linha.dataset.idseq = pedido.idSequencial;
+
+        linha.innerHTML = `
+          <td>${pedido.idSequencial || (start + index + 1)}</td>
+          <td>${pedido.item}</td>
+          <td>${pedido.op}</td>
+          <td>${pedido.quantidade}</td>
+          <td>${pedido.parceiro}</td>
+          <td>
+            ${pedido.status}
+            ${isTemp ? `<span class="countdown-badge" id="cd-${pedido.idSequencial}">${remaining}s</span>` : ""}
+          </td>
+          <td>${new Date(pedido.dataEntrada).toLocaleString()}</td>
+          <td>${pedido.dataModificacao ? new Date(pedido.dataModificacao).toLocaleString() : "-"}</td>
+          <td>
+            <button onclick='abrirResposta(${pedido.idSequencial})'>Responder</button>
+            <button onclick='abrirChatPedido(${pedido.idSequencial})'>Popup</button>
+          </td>
+        `;
+
+        if (isTemp) {
+          linha.classList.add("temporario");
+          linha.style.background = "#fff3cd";
+        }
+
+        if (highlightId && highlightId === pedido.idSequencial) {
+          linha.classList.add("highlight");
+        }
+      });
+
+      document.getElementById("page-info").innerText =
+        `Página ${currentPage} de ${Math.ceil(pedidos.length / itemsPerPage) || 1}`;
+      document.getElementById("prev-btn").disabled = currentPage === 1;
+      document.getElementById("next-btn").disabled = currentPage * itemsPerPage >= pedidos.length;
+    }
+
+    // Atualiza só os badges de contagem regressiva, sem re-renderizar a tabela inteira
+    function tickCountdowns() {
+      const agora = Date.now();
+      temporariosMap.forEach((t, idSeq) => {
+        const badge = document.getElementById(`cd-${idSeq}`);
+        const remaining = Math.max(0, Math.ceil((t.expiresAt - agora) / 1000));
+        if (badge) badge.innerText = `${remaining}s`;
+      });
+    }
+
+    // Inicia o tick de contagem regressiva
+    setInterval(tickCountdowns, 1000);
+
+    // Agenda a remoção de um pedido temporário após 20s
+    function agendarRemocaoTemporario(idSeq, pedido) {
+      // Se já existe um timer, cancela
+      if (temporariosMap.has(idSeq)) {
+        clearTimeout(temporariosMap.get(idSeq).timerId);
+      }
+
+      const expiresAt = Date.now() + 20000;
+      const timerId = setTimeout(() => {
+        // Fade out suave
+        const linha = document.querySelector(`tr[data-idseq="${idSeq}"]`);
+        if (linha) {
+          linha.classList.add("fadeout");
+          setTimeout(() => {
+            temporariosMap.delete(idSeq);
+            renderPedidos();
+          }, 1000);
+        } else {
+          temporariosMap.delete(idSeq);
+          renderPedidos();
+        }
+      }, 20000);
+
+      temporariosMap.set(idSeq, { pedido, expiresAt, timerId });
+    }
+
+    window.previousPage = () => {
+      if (currentPage > 1) { currentPage--; renderPedidos(); }
+    };
+
+    window.nextPage = () => {
+      if (currentPage * itemsPerPage < pedidos.length) { currentPage++; renderPedidos(); }
+    };
+
+    function listenPedidos() {
+      const q = query(collection(db, "pedidos"), orderBy("idSequencial", "asc"));
+      onSnapshot(q, (snapshot) => {
+        let highlightId = null;
+
+        snapshot.docChanges().forEach(change => {
+          const data = change.doc.data();
+          const idSeq = data.idSequencial;
+          const statusAtualizado = (data.status || "").toLowerCase().trim();
+
+          if (change.type === "added" || change.type === "modified") {
+            // Se virou liberado ou pago: agenda aparição temporária de 20s
+            if (statusTemporarios.includes(statusAtualizado) && !statusVisiveis.filter(s => s !== "pago").includes(statusAtualizado)) {
+              agendarRemocaoTemporario(idSeq, data);
+              highlightId = idSeq;
+              notificationSound.play();
+            }
+            // Se é um status sempre visível (não liberado, falta): notifica normalmente
+            else if (statusVisiveis.includes(statusAtualizado)) {
+              highlightId = idSeq;
+              notificationSound.play();
+            }
+          }
+        });
+
+        // Mapeia todos os pedidos
+        let todosPedidos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Filtra apenas os status permanentemente visíveis
+        pedidos = todosPedidos.filter(p =>
+          statusVisiveis.includes((p.status || "").toLowerCase().trim())
+        );
+
+        // Ordena por dataModificacao (ou dataEntrada) desc — mais recente no topo
+        pedidos.sort((a, b) => {
+          const dataA = new Date(a.dataModificacao || a.dataEntrada);
+          const dataB = new Date(b.dataModificacao || b.dataEntrada);
+          return dataB - dataA;
+        });
+
+        renderPedidos(highlightId);
+      });
+    }
+
+    // Resposta
+    window.abrirResposta = async (pedidoId) => {
+      document.getElementById("respostaBox").style.display = "block";
+      document.getElementById("respostaPedidoId").innerText = pedidoId;
+      document.getElementById("respostaTexto").value = "";
+      await carregarRespostas(pedidoId);
+    };
+
+    window.fecharResposta = () => { 
+      document.getElementById("respostaBox").style.display = "none"; 
+    };
+
+    async function carregarRespostas(pedidoId) {
+      const q = query(collection(db, "respostasPedidos"), where("pedidoId", "==", pedidoId), orderBy("data", "asc"));
+      const qs = await getDocs(q);
+      const lista = document.getElementById("mensagensLista");
+      lista.innerHTML = "";
+      qs.forEach(d => {
+        const r = d.data();
+        const li = document.createElement("li");
+        const isCriador = r.autor && r.autor.includes("@");
+        li.classList.add("mensagem", isCriador ? "criador" : "estoque");
+        li.innerHTML = `<div class='bolha'>${r.mensagem}<small>${r.autor} - ${new Date(r.data).toLocaleString()}</small></div>`;
+        lista.appendChild(li);
+      });
+      lista.scrollTop = lista.scrollHeight;
+    }
+
+    document.getElementById("btnEnviarResposta").addEventListener("click", async () => {
+      const pedidoId = parseInt(document.getElementById("respostaPedidoId").innerText);
+      const mensagem = document.getElementById("respostaTexto").value.trim();
+      if (!mensagem) { alert("Digite uma resposta."); return; }
+      const user = auth.currentUser;
+      const autor = user && user.email ? user.email : "criador";
+      await addDoc(collection(db, "respostasPedidos"), { pedidoId, autor, mensagem, data: new Date().toISOString() });
+      document.getElementById("respostaTexto").value = "";
+      await carregarRespostas(pedidoId);
+    });
+
+    // Chat popup
+    const chatBtn = document.getElementById("chatBtn");
+    const chatPopup = document.getElementById("chatPopup");
+    const closeChat = document.getElementById("closeChat");
+    const minimizeChat = document.getElementById("minimizeChat");
+    const chatMensagens = document.getElementById("chatMensagens");
+    const chatInput = document.getElementById("chatInput");
+    const enviarMsg = document.getElementById("enviarMsg");
+    const chatBadge = document.getElementById("chatBadge");
+    const chatPedidoIdSpan = document.getElementById("chatPedidoId");
+    let chatPedidoAtual = null;
+    let unsubscribe = null;
+    let unreadCount = 0;
+    let minimized = false;
+
+    function updateBadge(){ 
+      if(unreadCount > 0){ 
+        chatBadge.innerText = unreadCount; 
+        chatBadge.style.display = "inline-block"; 
+      } else { 
+        chatBadge.style.display = "none"; 
+      } 
+    }
+
+    chatBtn.addEventListener("click", () => {
+      if(!chatPedidoAtual){ 
+        alert("Selecione um pedido (Abrir Chat) antes de usar o popup."); 
+        return;
+      }
+      unreadCount = 0; updateBadge(); 
+      chatPopup.style.display = "flex"; 
+      carregarChat(chatPedidoAtual); 
+    });
+
+    closeChat.addEventListener("click", () => { chatPopup.style.display = "none"; });
+
+    minimizeChat.addEventListener("click", () => {
+      minimized = !minimized; 
+      if(minimized){ 
+        chatPopup.style.height = "50px"; 
+        chatPopup.querySelector(".chat-mensagens").style.display = "none"; 
+        chatPopup.querySelector(".chat-input").style.display = "none"; 
+      } else { 
+        chatPopup.style.height = "500px"; 
+        chatPopup.querySelector(".chat-mensagens").style.display = "block"; 
+        chatPopup.querySelector(".chat-input").style.display = "flex"; 
+      } 
+    });
+
+    window.abrirChatPedido = (pedidoId) => {
+      chatPedidoAtual = pedidoId; 
+      chatPedidoIdSpan.innerText = pedidoId; 
+      chatPopup.style.display = "flex"; 
+      carregarChat(pedidoId); 
+    };
+
+    enviarMsg.addEventListener("click", async () => {
+      if(!chatPedidoAtual) return; 
+      const mensagem = chatInput.value.trim(); 
+      if(!mensagem) return; 
+      const user = auth.currentUser; 
+      const autor = user && user.email ? user.email : "criador"; 
+      await addDoc(collection(db, "respostasPedidos"), { pedidoId: chatPedidoAtual, autor, mensagem, data: new Date().toISOString() }); 
+      chatInput.value = ""; 
+    });
+
+    function carregarChat(pedidoId){ 
+      chatMensagens.innerHTML = ""; 
+      if(unsubscribe) unsubscribe(); 
+      const q = query(collection(db, "respostasPedidos"), where("pedidoId", "==", pedidoId), orderBy("data", "asc")); 
+      unsubscribe = onSnapshot(q, snapshot => { 
+        chatMensagens.innerHTML = ""; 
+        snapshot.forEach(docSnap => { 
+          const r = docSnap.data(); 
+          const div = document.createElement("div"); 
+          const isCriador = r.autor && r.autor.includes && r.autor.includes("@"); 
+          div.className = "mensagem " + (isCriador ? "criador" : "estoque"); 
+          div.innerHTML = `<div class='bolha'>${r.mensagem}<small>${r.autor} - ${new Date(r.data).toLocaleString()}</small></div>`; 
+          chatMensagens.appendChild(div); 
+        }); 
+        chatMensagens.scrollTop = chatMensagens.scrollHeight; 
+        if(chatPopup.style.display === "none"){ unreadCount++; updateBadge(); } 
+      }); 
+    }
+
+    window.onload = () => { listenPedidos(); };
+  </script>
+</body>
+</html>
