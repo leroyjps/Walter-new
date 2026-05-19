@@ -32,6 +32,7 @@
             <li><a href="sobre-nos.html">Sobre</a></li>
             <li><a href="Entregas.html">Entregas</a></li>
             <li><a href="Videos.html">Vídeos</a></li>
+            <li><a href="bi.html">BI</a></li>
             <li><a href="clima.html">Clima</a></li>
             <li><a href="Embarques.html">Embarques</a></li>
             <li><a href="contato.html">Contato</a></li>
@@ -46,11 +47,7 @@
 <div class="tradingview-widget-container">
   <div class="tradingview-widget-container__widget"></div>
 
-  <script
-    type="text/javascript"
-    src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js"
-    async>
-  {
+  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async onload='(function(){ var cfg = {
     "symbols": [
       { "proName": "BMFBOVESPA:IBOV", "title": "Ibovespa" },
       { "proName": "FX_IDC:USDBRL", "title": "Dólar" },
@@ -61,7 +58,6 @@
       { "proName": "NASDAQ:GOOGL", "title": "Alphabet (Google)" },
       { "proName": "NASDAQ:MSFT", "title": "Microsoft (OpenAI)" },
 
-    
       { "proName": "BMFBOVESPA:PETR4", "title": "Petrobras PN" },
       { "proName": "BMFBOVESPA:PETR3", "title": "Petrobras ON" },
       { "proName": "NYSE:SAP", "title": "S&P 500" },
@@ -72,7 +68,6 @@
       { "proName": "BMFBOVESPA:VALE3", "title": "Vale" },
       { "proName": "BMFBOVESPA:WEGE3", "title": "WEG" },
 
-      
       { "proName": "NYSE:CNH", "title": "CNH Industrial" },
       { "proName": "NYSE:DE", "title": "John Deere" },
       { "proName": "NYSE:DAN", "title": "DANA" },
@@ -83,8 +78,7 @@
     "isTransparent": false,
     "displayMode": "adaptive",
     "locale": "pt"
-  }
-  </script>
+  }; try { if (typeof TradingView !== "undefined" && TradingView.widget) { new TradingView.widget(cfg); } } catch(e){} })()'></script>
 </div>
 
 
